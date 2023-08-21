@@ -1,0 +1,43 @@
+services:
+    rabbitmq:
+        image: rabbitmq:3-management
+        container_name: karavan_rabbitmq
+        networks:
+          - network1
+    flask:
+        build:
+          context: .
+          dockerfile: Dockerfile
+        image: karavan:v1
+        container_name: karavan
+        ports:
+          - '8080:5000'
+        networks:
+          - network1
+        depends_on:
+          - rabbitmq
+          - db
+        volumes:
+          - /var/docker-data/karavan-management/static/users:/app/static/users
+    db:
+        image: postgres
+        restart: always
+        container_name: karavan_postgres
+        ports:
+          - '5435:5432'
+        environment:
+           POSTGRES_USER: postgres
+           POSTGRES_PASSWORD: a
+           POSTGRES_DB: karavan
+        volumes:
+          - db:/var/lib/postgresql/data
+          - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+        networks:
+          - network1
+networks:
+  network1:
+    name: karavan
+    external: true
+volumes:
+  db:
+    driver: local

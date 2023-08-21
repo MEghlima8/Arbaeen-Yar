@@ -1,0 +1,8 @@
+pika
+python-dotenv
+psycopg2
+requests
+pydub
+python-telegram-bot
+Pillow
+jdatetime
