@@ -18,3 +18,9 @@ keyboard_cancel = [
 ]
 reply_markup_cancel = InlineKeyboardMarkup(keyboard_cancel)
 
+
+keyboard_start_user = [
+    [InlineKeyboardButton("ارسال موقعیت مکانی", callback_data="/send-my-location")]
+]
+reply_markup_start_user = InlineKeyboardMarkup(keyboard_start_user)
+

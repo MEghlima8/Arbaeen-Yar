@@ -129,7 +129,7 @@ class PostgreSQL:
     def checkWhoIs(self,chat_id):
         query = "select is_manager,is_user from users WHERE chat_id=%s"
         args = (chat_id, )
-        text = self.execute_query(query, args).fetchall()[0]
+        text = self.execute_query(query, args).fetchall()
         return text
  
 # Add user to karavan_users table
@@ -141,11 +141,33 @@ class PostgreSQL:
         
 
     def addUsernamePassToKaravan(self,user_uuid,fullname, username, password):
-        query = "INSERT INTO users (uuid, fullname, username, password, is_user, active) VALUES (%s , %s , %s , %s , 'true', 'false')"
+        query = "INSERT INTO users (uuid, fullname, username, password, is_user, active, is_manager, step) VALUES (%s , %s , %s , %s , 'true', 'false', 'false', 'home')"
         args = (user_uuid, fullname, username, password)
         self.execute_query(query, args)
         return 'true'
         
+        
+    def checkMatchUsernamePassword(self,username,password):
+        query = "select uuid from users WHERE username=%s AND password=%s"
+        args = (username, password)
+        res = self.execute_query(query, args).fetchall()
+        return res
+    
+    def activeUserAccount(self, uuid, chat_id):
+        query = "DELETE FROM users where chat_id = %s"
+        args = (chat_id,)
+        res = self.execute_query(query, args)
+        query = "UPDATE users set chat_id=%s , active='true' WHERE uuid=%s"
+        args = (chat_id,uuid)
+        res = self.execute_query(query, args)
+        return res
+
+    
+    def addReqToDb(self, uuid, user_uuid, type, j_params, time, status):
+        query = "INSERT INTO request (uuid, user_uuid, type, params, time, status) VALUES (%s , %s , %s , %s , %s , %s) RETURNING uuid"
+        args =(uuid, user_uuid, type, j_params, time, status)
+        req_uuid = self.execute_query(query, args).fetchall()[0][0]
+        return req_uuid    
         
 
 db = PostgreSQL(host=host, database=database, user=user, password=password, port=port)

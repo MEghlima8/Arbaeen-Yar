@@ -15,9 +15,12 @@ class User:
         
         
     def whoIs(self):
-        manager,user = db.db.checkWhoIs(self.chat_id)
-        if manager == 'true':
-            return 'manager'
-        elif user == 'true':
-            return 'user'
-        return 'false'
+        try:
+            manager,user = db.db.checkWhoIs(self.chat_id)[0]
+            if manager == 'true':
+                return 'manager'
+            elif user == 'true':
+                return 'user'
+            return 'false'
+        except:
+            return 'false'

@@ -5,7 +5,7 @@ from App.Controller import process
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CallbackQueryHandler, MessageHandler,  filters, ContextTypes
 from re import match
-from App.Controller.keyboard import reply_markup_start, reply_markup_start_manager, reply_markup_cancel
+from App.Controller.keyboard import reply_markup_start, reply_markup_start_manager, reply_markup_cancel, reply_markup_start_user
 import time
 
 
@@ -21,17 +21,24 @@ async def cancel(_update, context, _text, _STEP, chat_id):
     elif whois == 'manager':
         await context.bot.send_message(chat_id, text='بازگشت به صفحه اصلی انجام شد', reply_markup=reply_markup_start_manager)
     else:
-        await context.bot.send_message(chat_id, text='بازگشت به صفحه اصلی انجام شد', reply_markup=reply_markup_start)
+        await context.bot.send_message(chat_id, text='بازگشت به صفحه اصلی انجام شد', reply_markup=reply_markup_start_user)
     db.db.changeUserSTEP('home', chat_id)
 
 
 
 # Start bot
 async def start(_update, context, _text, _STEP, chat_id):
+    db.db.changeUserSTEP('home', chat_id)
+    whois = User(chat_id).whoIs()
+    if whois == 'manager':
+        await context.bot.send_message(chat_id, text='به ربات اربعین یار خوش برگشتید', reply_markup=reply_markup_start_manager)
+        return
+    elif whois == 'user':
+        await context.bot.send_message(chat_id, text='به ربات اربعین یار خوش برگشتید', reply_markup=reply_markup_start_user)
+        return
     user = User(chat_id=chat_id)
     user.signup()
     await context.bot.send_message(chat_id=chat_id, text='سلام به ربات {} خوش آمدید \nاگر عضو یک کاروان هستید بر روی گزینه ورود اعضا ضربه بزنید \nاگر مدیر یک کاروان هستید بر روی گزینه ورود مدیران ضربه بزنید'.format(config.configs['SYSTEM_NAME']), reply_markup=reply_markup_start)
-    db.db.changeUserSTEP('home', chat_id)
 
 
 
@@ -44,9 +51,11 @@ commands = [
     [r"/cancel", r".+", cancel],
     
     [r"/create-new-karavan-manager", r".+", process.create_new_karavan],
-    # [r"/signin-karavan-user", r".+", signin_karavan_user],
+    [r"/signin-karavan-user", r".+", process.signin_karavan_user],
     
     [r"/add-new-user-to-karavan", r".+", process.add_new_user_to_karavan],
+    
+    [r"/send-my-location", r".+", process.send_my_location],
     
     
     # STEPS
@@ -55,12 +64,19 @@ commands = [
     
     [r".+", r"get-karavan-user-fullname", process.get_karavan_user_fullname],
     
+    [r".+", r"get-user-username-to-signin", process.get_user_username_to_signin],
+    [r".+", r"get-user-password-to-signin", process.get_user_password_to_signin],
+    
+    [r".+", r"get-user-location", process.get_user_location],
+    [r".+", r"get-user-caption-location", process.get_user_caption_location],
+    
 ]
 
 
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Get chat id and message text
+    # import pdb; pdb.set_trace()
     try:
         chat_id = update.effective_chat.id
         text = update.callback_query.data
@@ -98,7 +114,6 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
 
 def main():
-        
     app = Application.builder().token(TOKEN).base_url(BASE_URL).base_file_url(BASE_FILE_URL).build()
     
     # Messages
