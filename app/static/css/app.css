@@ -1,0 +1,138 @@
+.panels {
+  height: 600px !important;
+}
+
+.swal2-popup {
+  font-size: 1.6rem !important;
+}
+
+.progress-bar-upload-file {
+  width: 300px;
+  height: 20px;
+  border: 1px solid #ccc;
+  margin-top: 20px;
+}
+.progress-upload-file {
+  width: 0;
+  height: 100%;
+  background-color: #4CAF50;
+}
+.message-upload-file {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.topnav1 {
+	margin-top: 8px;
+}
+
+
+.topnav1 .search-container1 {
+  float: right;
+}
+
+.topnav1 input[type=text] {
+  padding: 6px;
+  margin-top: 8px;
+  font-size: 17px;
+  border: none;
+  width: 350px;
+}
+
+.topnav1 .search-container1 button {
+  float: right;
+  padding: 6px 10px;
+  margin-top: 8px;
+  margin-right: 16px;
+  background: #ddd;
+  font-size: 17px;
+  border: none;
+  cursor: pointer;
+}
+
+.topnav1 .search-container1 button:hover {
+  background: #ccc;
+}
+
+
+.pagination {
+  position: absolute;
+  bottom: 30;
+  padding-right: 480px;
+  display: inline-block;
+  justify-content: center;  
+}
+
+.pagination a {
+  color: black;
+  float: left;
+  padding: 8px 16px;
+  text-decoration: none;
+}
+
+.pagination a.active {
+  background-color: #347dbd;
+  color: white;
+}
+
+.pagination a:hover:not(.active) {background-color: #ddd;}
+
+.menu {
+  background-color: cadetblue;
+}
+
+#map { 
+  height: 250px; 
+  width: 450px;
+}
+
+
+select {
+  --background-gradient: linear- 
+  gradient(178deg, #ffff33 10%, #3333ff);
+
+  /* Reset Select */
+  appearance: none;
+  outline: 10px red;
+  border: 0;
+  box-shadow: none;
+  /* Personalize */
+  flex: 1;
+  color: #fff;
+  background-color: #476d93;
+  background-image: none;
+  cursor: pointer;
+  padding-right: 50px;
+}
+/* Remove IE arrow */
+select::-ms-expand {
+  display: none;
+}
+/* Custom Select wrapper */
+.select {
+  position: relative;
+  display: flex;
+  width: 20em;
+  height: 3em;
+  border-radius: .25em;
+  overflow: hidden;
+}
+/* Arrow */
+.select::after {
+  content: '\25BC';
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 1em;
+  background-color: #34495e;
+  transition: .25s all ease;
+  pointer-events: none;
+}
+/* Transition */
+.select:hover::after {
+  color: #f39c12;
+}
+
+.swal2-title {
+  font-size: 2rem !important;
+}

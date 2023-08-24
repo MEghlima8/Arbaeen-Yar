@@ -33,7 +33,6 @@ CREATE TABLE karavan_users (
 );
 
 
-
 CREATE TABLE request (
     id SERIAL PRIMARY KEY ,
     uuid VARCHAR (255) ,

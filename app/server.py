@@ -1,12 +1,14 @@
 from App import config
-from App.Controller.user_controller import User
+from App.Controller.user_controller import Manager
 from App.Controller import db_postgres_controller as db
-from App.Controller import process
+from App.Controller import bot_process
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CallbackQueryHandler, MessageHandler,  filters, ContextTypes
 from re import match
 from App.Controller.keyboard import reply_markup_start, reply_markup_start_manager, reply_markup_cancel, reply_markup_start_user
 import time
+import threading
+import web_server
 
 
 TOKEN = config.configs['BOT_TOKEN']
@@ -15,7 +17,7 @@ BASE_FILE_URL = config.configs['BASE_FILE_URL']
      
 
 async def cancel(_update, context, _text, _STEP, chat_id):
-    whois = User(chat_id).whoIs()
+    whois = Manager(chat_id).whoIs()
     if whois == 'false':
         await context.bot.send_message(chat_id, text='صفحه اصلی \nبرای شروع یکی از گزینه های زیر را انتخاب کنید', reply_markup=reply_markup_start)
     elif whois == 'manager':
@@ -29,14 +31,14 @@ async def cancel(_update, context, _text, _STEP, chat_id):
 # Start bot
 async def start(_update, context, _text, _STEP, chat_id):
     db.db.changeUserSTEP('home', chat_id)
-    whois = User(chat_id).whoIs()
+    whois = Manager(chat_id).whoIs()
     if whois == 'manager':
         await context.bot.send_message(chat_id, text='به ربات اربعین یار خوش برگشتید', reply_markup=reply_markup_start_manager)
         return
     elif whois == 'user':
         await context.bot.send_message(chat_id, text='به ربات اربعین یار خوش برگشتید', reply_markup=reply_markup_start_user)
         return
-    user = User(chat_id=chat_id)
+    user = Manager(chat_id=chat_id)
     user.signup()
     await context.bot.send_message(chat_id=chat_id, text='سلام به ربات {} خوش آمدید \nاگر عضو یک کاروان هستید بر روی گزینه ورود اعضا ضربه بزنید \nاگر مدیر یک کاروان هستید بر روی گزینه ورود مدیران ضربه بزنید'.format(config.configs['SYSTEM_NAME']), reply_markup=reply_markup_start)
 
@@ -50,25 +52,19 @@ commands = [
     # [r"/help", r".+", help],
     [r"/cancel", r".+", cancel],
     
-    [r"/create-new-karavan-manager", r".+", process.create_new_karavan],
-    [r"/signin-karavan-user", r".+", process.signin_karavan_user],
+    [r"/signin-karavan-user", r".+", bot_process.signin_karavan_user],
     
-    [r"/add-new-user-to-karavan", r".+", process.add_new_user_to_karavan],
-    
-    [r"/send-my-location", r".+", process.send_my_location],
+    [r"/send-my-location", r".+", bot_process.send_my_location],
     
     
-    # STEPS
-    [r".+", r"get-karavan-manager-fullname", process.get_karavan_manager_fullname],
-    [r".+", r"get-karavan-name", process.get_karavan_name],
     
-    [r".+", r"get-karavan-user-fullname", process.get_karavan_user_fullname],
+    # [r".+", r"get-karavan-user-fullname", bot_process.get_karavan_user_fullname],
     
-    [r".+", r"get-user-username-to-signin", process.get_user_username_to_signin],
-    [r".+", r"get-user-password-to-signin", process.get_user_password_to_signin],
+    [r".+", r"get-user-username-to-signin", bot_process.get_user_username_to_signin],
+    [r".+", r"get-user-password-to-signin", bot_process.get_user_password_to_signin],
     
-    [r".+", r"get-user-location", process.get_user_location],
-    [r".+", r"get-user-caption-location", process.get_user_caption_location],
+    [r".+", r"get-user-location", bot_process.get_user_location],
+    [r".+", r"get-user-caption-location", bot_process.get_user_caption_location],
     
 ]
 
@@ -114,6 +110,11 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
 
 def main():
+    
+    # Run web server
+    t = threading.Thread(None, web_server.main, None, ())
+    t.start()
+    
     app = Application.builder().token(TOKEN).base_url(BASE_URL).base_file_url(BASE_FILE_URL).build()
     
     # Messages

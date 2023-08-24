@@ -1,5 +1,6 @@
 pika
 python-dotenv
+python-Levenshtein
 psycopg2
 requests
 pydub
