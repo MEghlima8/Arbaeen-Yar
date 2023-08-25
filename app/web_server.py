@@ -49,7 +49,6 @@ def add_new_user_to_karavan():
         resp = {"result": "User added successfully", "status-code":201}
     else:
         resp = {"result": res_add_user, "status-code":400}
-    print('resp: ',resp)
     return resp
 
     
@@ -73,6 +72,15 @@ def get_karavans_name():
     o_manager = db.db.getKaravansInfo(manager_uuid)
     resp = {"result":o_manager , "status-code":200}
     return resp
+
+
+@app.route('/get-karavan-users-info', methods=['POST'])
+def get_karavan_users_info():
+    j_body_data = request.get_json()
+    res = db.db.getAllKaravanUsersInfo(j_body_data['karavan_uuid'])
+    resp = {"result":res, "status-code":200}
+    return resp
+    
 
 
 # Signin user

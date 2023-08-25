@@ -51,10 +51,9 @@ app_methods.addUserToKaravan = function(){
     }).then((result) => {
         if (result.value != null){
             axios.post('/add-new-user-to-karavan', result.value).then(response => {  
-                console.log(response.data)
                 if (response.data['status-code'] == 201){
-                    // app_methods.getKaravanInfo()
-                    Swal.fire({title:'موفقیت آمیز' ,text:'برای مشاهده نام کاربری و رمز عبور کاربر به کاروان مراجعه کنید', icon:'success', confirmButtonText:'تایید'})
+                    this.getKaravanUsersInfo()
+                    Swal.fire({title:'موفقیت آمیز' ,text:'کاربر با موفقیت اضافه شد', icon:'success', confirmButtonText:'تایید'})
                 }
                 else if (response.data['result'] == 'no_valid_fullname') {Swal.fire({title:'خطا' ,text:'نام و نام خانوادگی را فقط به فارسی وارد کنید', icon:'error', confirmButtonText:'تایید'})}
                 
@@ -70,26 +69,48 @@ app_methods.addUserToKaravan = function(){
 }  
 
 
+app_methods.getKaravanUsersInfo = function(){
+    data = {'karavan_uuid': this.selected_karavan_uuid}
+    axios.post('/get-karavan-users-info', data).then(response => {
+        
+        if (response.data['status-code'] == 200) {
+            this.users_info = response.data['result']
+            for (let i=0; i < this.users_info.length; i++){                
+                if (this.users_info[i][5] == 'true'){
+                    this.users_info[i][5] = 'فعال'
+                }
+                else {
+                    this.users_info[i][5] = 'غیر فعال'
+                }}                    
+        }
+        else {
+            Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'})
+        }
+    })
+}
+
 app_methods.changeSelectedKaravan = function(){
     if (this.selected_karavan_uuid == ''){
         this.users_info_panel = '';
     } 
     else {
-        this.users_info_panel = 'true'
-    }
+        this.getKaravanUsersInfo()
+        }
+    this.users_info_panel = 'true'
 }
+
 
 
 app_methods.addKaravan = function(){
     Swal.fire({
         title: 'یک نام برای کاروان خود انتخاب کنید',
         input: 'text'
-      }).then(function (input) {
+      }).then( (input) => {
         data = {'new_karavan_name': input.value}
         if (input.value != null){
             axios.post('/add-new-karavan', data).then(response => {  
                 if (response.data['status-code'] == 200){
-                    app_methods.getKaravansName()
+                    this.getKaravansName()
                     Swal.fire({title:'ثبت کاروان' ,text:'کاروان جدید با موفقیت ایجاد شد', icon:'success', confirmButtonText:'تایید'})
                 }
                 else {
@@ -104,7 +125,6 @@ app_methods.getKaravansName = function(){
     axios.post('/get-karavans-name').then(response => {         
     this.change_panel('manager', 'manager-dashboard')
     this.manager_karavans_info = response.data['result']
-    manager_karavans_info = response.data['result']
 })}
 
 
@@ -121,7 +141,7 @@ app_methods.signinManager = function(){
             // this.showUserLocation()
         }        
         else {            
-            //  Login was not succesful
+            //  Login was not succesfully
             if (response.data['status-code'] == 400){Swal.fire({title:'خطا' ,text:'نام کاربری یا رمز عبور اشتباه است', icon:'error', confirmButtonText:'تایید'})}
             this.panel = 'sign-in'
         }

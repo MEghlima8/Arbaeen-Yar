@@ -9,7 +9,7 @@ from App.Controller.keyboard import reply_markup_start, reply_markup_start_manag
 import time
 import threading
 import web_server
-
+import uuid
 
 TOKEN = config.configs['BOT_TOKEN']
 BASE_URL = config.configs['BASE_URL']
@@ -17,30 +17,17 @@ BASE_FILE_URL = config.configs['BASE_FILE_URL']
      
 
 async def cancel(_update, context, _text, _STEP, chat_id):
-    whois = Manager(chat_id).whoIs()
-    if whois == 'false':
-        await context.bot.send_message(chat_id, text='صفحه اصلی \nبرای شروع یکی از گزینه های زیر را انتخاب کنید', reply_markup=reply_markup_start)
-    elif whois == 'manager':
-        await context.bot.send_message(chat_id, text='بازگشت به صفحه اصلی انجام شد', reply_markup=reply_markup_start_manager)
-    else:
-        await context.bot.send_message(chat_id, text='بازگشت به صفحه اصلی انجام شد', reply_markup=reply_markup_start_user)
+    await context.bot.send_message(chat_id, text='بازگشت به صفحه اصلی انجام شد')
     db.db.changeUserSTEP('home', chat_id)
 
 
 
 # Start bot
 async def start(_update, context, _text, _STEP, chat_id):
-    db.db.changeUserSTEP('home', chat_id)
-    whois = Manager(chat_id).whoIs()
-    if whois == 'manager':
-        await context.bot.send_message(chat_id, text='به ربات اربعین یار خوش برگشتید', reply_markup=reply_markup_start_manager)
-        return
-    elif whois == 'user':
-        await context.bot.send_message(chat_id, text='به ربات اربعین یار خوش برگشتید', reply_markup=reply_markup_start_user)
-        return
-    user = Manager(chat_id=chat_id)
-    user.signup()
-    await context.bot.send_message(chat_id=chat_id, text='سلام به ربات {} خوش آمدید \nاگر عضو یک کاروان هستید بر روی گزینه ورود اعضا ضربه بزنید \nاگر مدیر یک کاروان هستید بر روی گزینه ورود مدیران ضربه بزنید'.format(config.configs['SYSTEM_NAME']), reply_markup=reply_markup_start)
+    db.db.addUserFromBotToDB(uuid.uuid4().hex, chat_id)
+    await context.bot.send_message(chat_id=chat_id, text='سلام به ربات {} خوش آمدید \nلطفا نام کاربری خود را وارد کنید :'.format(config.configs['SYSTEM_NAME']))
+    db.db.changeUserSTEP('get-user-username-to-signin', chat_id)
+    return
 
 
 
@@ -52,13 +39,7 @@ commands = [
     # [r"/help", r".+", help],
     [r"/cancel", r".+", cancel],
     
-    [r"/signin-karavan-user", r".+", bot_process.signin_karavan_user],
-    
     [r"/send-my-location", r".+", bot_process.send_my_location],
-    
-    
-    
-    # [r".+", r"get-karavan-user-fullname", bot_process.get_karavan_user_fullname],
     
     [r".+", r"get-user-username-to-signin", bot_process.get_user_username_to_signin],
     [r".+", r"get-user-password-to-signin", bot_process.get_user_password_to_signin],
@@ -99,7 +80,8 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     for command in commands:
         valid_command = False
-        pattern, step, callback = command 
+        pattern, step, callback = command
+        # import pdb;pdb.set_trace()
         if match(pattern, text) and match(step, STEP):
             valid_command = True
             await callback(update,context,text,STEP,chat_id)

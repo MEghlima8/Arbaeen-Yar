@@ -1,4 +1,3 @@
-import hashlib
 import re 
 import Levenshtein
 from App.Controller import db_postgres_controller as db
@@ -13,9 +12,7 @@ class Valid:
         
 
     def check_match_info(self):
-        # Get users info
-        hash_password = hashlib.md5(self.password.encode('utf-8')).hexdigest()
-        user_info = db.db.checkMatchUsernamePassword(self.username,hash_password)
+        user_info = db.db.checkMatchUsernamePassword(self.username,self.password)
         
         if user_info != []:
             return user_info

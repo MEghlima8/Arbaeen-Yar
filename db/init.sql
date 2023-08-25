@@ -12,7 +12,7 @@ CREATE TABLE users (
     first_msg VARCHAR(255) ,
     second_msg VARCHAR(255)
 );
-
+    
 
 CREATE TABLE karavan (
     counter SERIAL ,

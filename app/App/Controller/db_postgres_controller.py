@@ -98,7 +98,11 @@ class PostgreSQL:
         return 'true'
         
 
-
+    def addUserFromBotToDB(self, uuid, chat_id):
+        query = "INSERT INTO users (uuid,chat_id,step) VALUES (%s, %s, 'home')"
+        args = (uuid, chat_id)
+        self.execute_query(query, args)
+        return 'true'
 
 
     def getFirstTextMsg(self, chat_id):
@@ -167,7 +171,7 @@ class PostgreSQL:
         query = "DELETE FROM users where chat_id = %s"
         args = (chat_id,)
         res = self.execute_query(query, args)
-        query = "UPDATE users set chat_id=%s , active='true' WHERE uuid=%s"
+        query = "UPDATE users set chat_id=%s , active='true', step='home' WHERE uuid=%s"
         args = (chat_id,uuid)
         res = self.execute_query(query, args)
         return res
@@ -183,11 +187,10 @@ class PostgreSQL:
 
 # web functions
 
-    def getUsersInfoFromKaravanUUID(self, karavan_uuid):
-        query = """SELECT users.uuid, users.chat_id, users.fullname, users.username, users.password FROM users
+    def getAllKaravanUsersInfo(self, karavan_uuid):
+        query = """SELECT users.uuid, users.chat_id, users.fullname, users.username, users.password, users.active FROM users
                     INNER JOIN karavan_users ON users.uuid=karavan_users.user_uuid 
-                    WHERE karavan_users.karavan_uuid=%s AND users.is_user='true' AND
-                    users.active='true'"""
+                    WHERE karavan_users.karavan_uuid=%s AND users.is_user='true'"""
         args =(karavan_uuid,)
         info = self.execute_query(query,args).fetchall()
         return info

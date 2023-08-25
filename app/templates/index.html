@@ -248,7 +248,9 @@
                                                     <th>نام و نام خانوادگی</th>
                                                     <th>شناسه</th>
                                                     <th>نام کاربری</th>
+                                                    <th>رمز عبور</th>
                                                     <th>فعالیت های کاربر</th>
+                                                    <th>وضعیت حساب</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -256,7 +258,9 @@
                                                     <td>${ user[2] }$</td>
                                                     <td>${ user[0] }$</td>
                                                     <td>${ user[3] }$</td>
-                                                    <td > <a @click.prevent="getUserLocations(user[0])" target="_blank" href="#" >مشاهده در نقشه</a> </td>
+                                                    <td>${ user[4] }$</td>
+                                                    <td > <a @click.prevent="getUserRequests(user[0])" target="_blank" href="#" >مشاهده</a> </td>
+                                                    <td>${ user[5] }$</td>
                                                 </tr>
                                             </tbody>
                                         </table>

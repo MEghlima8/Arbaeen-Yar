@@ -1,6 +1,5 @@
 from App.Controller import db_postgres_controller as db
 from App.Controller.validation import Valid
-import hashlib
 import uuid
 
 
@@ -19,9 +18,7 @@ class Manager:
 
         if check_user_info == True:
             manager_uuid = uuid.uuid4().hex         
-            # To save password in database as hash.
-            password = hashlib.md5(self.password.encode("utf-8")).hexdigest()
-            db.db.signupManager(manager_uuid, self.username, self.fullname, password)
+            db.db.signupManager(manager_uuid, self.username, self.fullname, self.password)
 
             res = {"status":"True"}
             return res
@@ -54,9 +51,7 @@ class User:
         
         if check_user_info == True:
             user_uuid = uuid.uuid4().hex  
-            # To save password in database as hash.
-            password = hashlib.md5(self.password.encode("utf-8")).hexdigest()
-            db.db.signupUser(user_uuid, self.username, self.fullname, password)
+            db.db.signupUser(user_uuid, self.username, self.fullname, self.password)
             
             manager_uuid = db.db.getUserUUID(manager_username)
             karavan_uuid = db.db.getKaravanUUID(manager_uuid)

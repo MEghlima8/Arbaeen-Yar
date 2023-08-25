@@ -22,19 +22,11 @@ def get_datetime():
     return now_datetime
 
 
-
-
-# Signin user to account - for the first time
-async def signin_karavan_user(_update, context, _text, _STEP, chat_id):
-    db.db.changeUserSTEP('get-user-username-to-signin', chat_id)
-    await context.bot.send_message(chat_id=chat_id, text='لطفا نام کاربری خود را وارد کنید : \nاگر حساب ندارید از مدیر کاروان بخواهید برایتان یک حساب ایجاد کند',reply_markup=reply_markup_cancel)
-    return
-
 # Signin user to account - Get user username
 async def get_user_username_to_signin(_update, context, text, _STEP, chat_id):
     db.db.changeFirstTextMsg(text,chat_id) # Store user username in database
     db.db.changeUserSTEP('get-user-password-to-signin', chat_id)
-    await context.bot.send_message(chat_id=chat_id, text='لطفا رمز عبور خود را وارد کنید :',reply_markup=reply_markup_cancel)
+    await context.bot.send_message(chat_id=chat_id, text='لطفا رمز عبور خود را وارد کنید :')
     return 
 
 
@@ -43,7 +35,7 @@ async def get_user_password_to_signin(_update, context, text, _STEP, chat_id):
     username = db.db.getFirstTextMsg(chat_id)
     password = text
     user_info = db.db.checkMatchUsernamePassword(username, password)
-    if user_info != [] and user_info[0][1] == 'false':
+    if user_info != [] and user_info[0][2] == 'true':
         user_uuid = user_info[0][0]
         # Remove the additional user record that created and update info of the user that created by manager.
         db.db.activeUserAccount(user_uuid,chat_id)

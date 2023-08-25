@@ -1,8 +1,7 @@
 from telegram import InlineKeyboardButton,InlineKeyboardMarkup
 
 keyboard_start = [
-    [InlineKeyboardButton("ورود مدیران", callback_data="/create-new-karavan-manager")],
-    [InlineKeyboardButton("ورود اعضا", callback_data="/signin-karavan-user")]
+
 ]
 reply_markup_start = InlineKeyboardMarkup(keyboard_start)
 
