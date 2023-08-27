@@ -5,6 +5,8 @@ from App.Controller import db_postgres_controller as db
 from App.Controller.user_controller import Manager, User
 import random
 import string
+import math
+
 
 app = Flask(__name__)
 
@@ -13,21 +15,17 @@ app.secret_key = config.configs['SECRET_KEY']
 app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
 
 
+def get_items_from_offset(page,all_items):
+    offset = (page - 1) * 8  # There are 8 requests per page
+    items = all_items[offset: offset + 8]
+    count_all_pages = math.ceil(len(all_items) / 8) # Get count of all pages: if all_req = 25 then return 3
+    return items,count_all_pages
+
+
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
 
-# @app.route('/on-click-search-bar-request', methods=['POST'])
-# def on_click_search_bar_request():
-#     j_body_data = request.get_json()
-#     uuid = j_body_data['search_bar_val']
-#     return web_process.find_req_for_request(uuid)
-
-# @app.route('/on-click-search-bar-user', methods=['POST'])
-# def on_click_search_bar_user():
-#     j_body_data = request.get_json()
-#     val = j_body_data['search_bar_val']
-#     return web_process.find_req_for_user(val)
 
 
 # @app.route('/get-user-locations', methods = ['POST'])
@@ -42,9 +40,8 @@ def add_new_user_to_karavan():
     j_body_data = request.get_json()
     user_password = ''.join(random.choice(string.ascii_letters) for _ in range(12))
     o_user = User(j_body_data['fullname'], j_body_data['username'], user_password)
-    res_add_user = o_user.signup(session['username'])
+    res_add_user = o_user.signup(j_body_data['karavan_uuid'])
     
-    # res_add_user = web_process.addNewUserToKaravan(user_fullname, user_username, manager_username)
     if res_add_user['status'] == 'True':
         resp = {"result": "User added successfully", "status-code":201}
     else:
@@ -78,9 +75,37 @@ def get_karavans_name():
 def get_karavan_users_info():
     j_body_data = request.get_json()
     res = db.db.getAllKaravanUsersInfo(j_body_data['karavan_uuid'])
-    resp = {"result":res, "status-code":200}
-    return resp
-    
+
+    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
+    result = {"status-code":200 , "result":page_items,
+              "count_pages":count_all_pages, "active_page":j_body_data["karavan_uuid"]
+              }
+    return result 
+
+
+@app.route('/get-souvenir-photos', methods=['POST'])
+def get_souvenir_photos():
+    j_body_data = request.get_json()
+    res = db.db.getKaravanRequestInfo(j_body_data['karavan_uuid'], '/souvenir-photo')
+
+    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
+    result = {"status-code":200 , "result":page_items,
+              "count_pages":count_all_pages, "active_page":j_body_data["karavan_uuid"]
+              }
+    return result 
+
+
+@app.route('/get-registered-locations', methods=['POST'])
+def get_registered_locations():
+    j_body_data = request.get_json()
+    res = db.db.getKaravanRequestInfo(j_body_data['karavan_uuid'], '/send-my-location')
+
+    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
+    result = {"status-code":200 , "result":page_items,
+              "count_pages":count_all_pages, "active_page":j_body_data["karavan_uuid"]
+              }
+    return result 
+
 
 
 # Signin user
@@ -102,7 +127,6 @@ def signin_manager():
         resp = {"result":o_manager , "status-code":400}
     return resp
 
-        
 
 # Signup user
 @app.route('/signup-manager', methods=['POST'])

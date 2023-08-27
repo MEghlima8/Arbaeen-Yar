@@ -2,22 +2,125 @@ var app_methods = {};
 
 app_methods.change_panel = function(panel,manager_panel){
     // this.search_bar_val = '',
-    this.panel = panel,
-    this.manager_panel = manager_panel
+    this.username = '';
+    this.password = '';
+    this.fullname = '';
+    this.show_location = 'false'
+    this.panel = panel;
+    this.manager_panel = manager_panel;
+}
+
+app_methods.isActivePanel = function(panel){
+    if (this.manager_panel == panel) { return true } else {return false}
+}
+
+app_methods.isActivePage = function(index){
+    return index === this.activeIndexPage;
 }
 
 
-// var map = L.map('map').setView([32.62132477920994, 44.03612973588855], 12);
+app_methods.getSouvenirPhotos = function(page){
+    if (this.selected_karavan_uuid == ''){
+        Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
+        return;
+    }
+    this.activeIndexPage = page;
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page}
+    axios.post('/get-souvenir-photos', data).then(response => {  
+        if (response.data['status-code'] == 200) {
+            this.souvenir_photos = response.data['result']
+            this.pages = response.data['count_pages']
+            this.change_panel('manager', 'souvenir-photos')
+        }
+        else { Swal.fire({title:'ناموفق' ,text:'خطای نامشخص', icon:'info', confirmButtonText:'تایید'}) }
+    })
+}
 
-// L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-//     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-//     maxZoom: 19,
-// }).addTo(map);
+
+app_methods.getRegisteredLocations = function(page){
+    if (this.selected_karavan_uuid == ''){
+        Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
+        return;
+    }
+    this.activeIndexPage = page;
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page}
+    axios.post('/get-registered-locations', data).then(response => {  
+        if (response.data['status-code'] == 200) {
+            this.registered_locations = response.data['result']
+            this.pages = response.data['count_pages']
+            this.change_panel('manager', 'registered-locations')
+        }
+        else { Swal.fire({title:'ناموفق' ,text:'خطای نامشخص', icon:'info', confirmButtonText:'تایید'}) }
+    })
+}   
 
 
-// app_methods.isActivePage = function(index){
-//     return index === this.activeIndexPage;
-// }
+app_methods.getKaravanUsersInfo = function(page){
+    this.activeIndexPage = page;
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page}
+
+    axios.post('/get-karavan-users-info', data).then(response => {
+        
+        if (response.data['status-code'] == 200) {
+            this.users_info = response.data['result']
+            this.pages = response.data['count_pages']
+            for (let i=0; i < this.users_info.length; i++){                
+                if (this.users_info[i][5] == 'true'){
+                    this.users_info[i][5] = 'فعال'
+                }
+                else {
+                    this.users_info[i][5] = 'غیر فعال'
+                }}                    
+        }
+        else {
+            Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'})
+        }
+    })
+}
+
+
+app_methods.changeSelectedKaravan = function(){
+    if (this.selected_karavan_uuid == ''){
+        this.show_panel = '';
+        return
+    } 
+    switch (this.manager_panel){
+        case 'manager-dashboard':
+            this.getKaravanUsersInfo(1);  
+            break;  
+            
+        case 'souvenir-photos':
+            this.getSouvenirPhotos(1);
+            break;
+            
+            case 'registered-locations':
+            this.getRegisteredLocations(1);
+            break;
+        }
+    this.show_panel = 'true'    
+}
+
+// setTimeout(()=>{this.showLocation()}, 100)
+
+
+app_methods.showLocation = function(longitude,latitude){
+    if (this.show_location == 'true'){
+        this.show_location = 'false';
+    }
+    else {
+        this.show_location = 'true';
+        // debugger
+        this.$nextTick(() => {
+            var map = L.map('map').setView([latitude, longitude ], 14);
+            
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19,
+            }).addTo(map);
+            var marker = L.marker([latitude, longitude]).addTo(map);
+        })
+    }
+}
 
 
 // app_methods.getUserLocations = function(user_uuid){
@@ -29,6 +132,7 @@ app_methods.change_panel = function(panel,manager_panel){
 //         else { Swal.fire({title:'ثبت نشده' ,text:'این عضو تا به حال موقعیت مکانی خود را ارسال نکرده است', icon:'info', confirmButtonText:'تایید'}) }
 //     })
 // }
+
 app_methods.addUserToKaravan = function(){
     if (this.selected_karavan_uuid == ''){
         Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
@@ -38,6 +142,7 @@ app_methods.addUserToKaravan = function(){
         title: 'افزودن عضو به کاروان',
         html: `<input v-model="user_fullname" type="text" id="add-user-to-karavan-fullname" class="swal2-input" placeholder="نام و نام خانوادگی">
         <input v-model="user_username" type="text" id="add-user-to-karavan-username" class="swal2-input" placeholder="نام کاربری">`,
+        inputPlaceholder: 'مثال : محمد اقلیما',
         confirmButtonText: 'افزودن',
         focusConfirm: false,
         preConfirm: () => {
@@ -50,9 +155,13 @@ app_methods.addUserToKaravan = function(){
         }
     }).then((result) => {
         if (result.value != null){
-            axios.post('/add-new-user-to-karavan', result.value).then(response => {  
+            data = {'fullname': result.value.fullname ,
+                    'username': result.value.username ,
+                    'karavan_uuid': this.selected_karavan_uuid
+                }
+            axios.post('/add-new-user-to-karavan', data).then(response => {  
                 if (response.data['status-code'] == 201){
-                    this.getKaravanUsersInfo()
+                    this.getKaravanUsersInfo(1)
                     Swal.fire({title:'موفقیت آمیز' ,text:'کاربر با موفقیت اضافه شد', icon:'success', confirmButtonText:'تایید'})
                 }
                 else if (response.data['result'] == 'no_valid_fullname') {Swal.fire({title:'خطا' ,text:'نام و نام خانوادگی را فقط به فارسی وارد کنید', icon:'error', confirmButtonText:'تایید'})}
@@ -69,48 +178,17 @@ app_methods.addUserToKaravan = function(){
 }  
 
 
-app_methods.getKaravanUsersInfo = function(){
-    data = {'karavan_uuid': this.selected_karavan_uuid}
-    axios.post('/get-karavan-users-info', data).then(response => {
-        
-        if (response.data['status-code'] == 200) {
-            this.users_info = response.data['result']
-            for (let i=0; i < this.users_info.length; i++){                
-                if (this.users_info[i][5] == 'true'){
-                    this.users_info[i][5] = 'فعال'
-                }
-                else {
-                    this.users_info[i][5] = 'غیر فعال'
-                }}                    
-        }
-        else {
-            Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'})
-        }
-    })
-}
-
-app_methods.changeSelectedKaravan = function(){
-    if (this.selected_karavan_uuid == ''){
-        this.users_info_panel = '';
-    } 
-    else {
-        this.getKaravanUsersInfo()
-        }
-    this.users_info_panel = 'true'
-}
-
-
-
 app_methods.addKaravan = function(){
     Swal.fire({
         title: 'یک نام برای کاروان خود انتخاب کنید',
-        input: 'text'
+        input: 'text',
+        inputPlaceholder: 'مثال : کاروان حسینی ها',
       }).then( (input) => {
         data = {'new_karavan_name': input.value}
         if (input.value != null){
             axios.post('/add-new-karavan', data).then(response => {  
                 if (response.data['status-code'] == 200){
-                    this.getKaravansName()
+                    this.getKaravansName(1)
                     Swal.fire({title:'ثبت کاروان' ,text:'کاروان جدید با موفقیت ایجاد شد', icon:'success', confirmButtonText:'تایید'})
                 }
                 else {
@@ -181,7 +259,7 @@ Vue.createApp({
     data(){ return {        
         panel: 'sign-in',
         manager_panel: '',
-        users_info_panel: '',  // In the dashboard
+        show_panel: '',  // In the dashboard
 
         manager_karavans_info: '',
         // current_karavan_name: '',
@@ -199,7 +277,7 @@ Vue.createApp({
         // search-bar
         search_bar_val: null,
 
-        // count of the current admin_panel pages for pagination
+        // count of the current manager_panel pages for pagination
         pages: '',
         activeIndexPage: '',
 
@@ -207,6 +285,10 @@ Vue.createApp({
         selected_karavan_uuid: '',
 
         map: '',
+        show_location: '',
+
+        souvenir_photos: '',
+        registered_locations: '',
     } },
     
     delimiters: ["${", "}$"],    

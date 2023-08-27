@@ -1,15 +1,14 @@
 from App import config
-from App.Controller.user_controller import Manager
 from App.Controller import db_postgres_controller as db
 from App.Controller import bot_process
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
 from telegram.ext import Application, CallbackQueryHandler, MessageHandler,  filters, ContextTypes
 from re import match
-from App.Controller.keyboard import reply_markup_start, reply_markup_start_manager, reply_markup_cancel, reply_markup_start_user
-import time
+from App.Controller.keyboard import reply_markup_start_user
 import threading
 import web_server
 import uuid
+
 
 TOKEN = config.configs['BOT_TOKEN']
 BASE_URL = config.configs['BASE_URL']
@@ -17,17 +16,33 @@ BASE_FILE_URL = config.configs['BASE_FILE_URL']
      
 
 async def cancel(_update, context, _text, _STEP, chat_id):
-    await context.bot.send_message(chat_id, text='بازگشت به صفحه اصلی انجام شد')
-    db.db.changeUserSTEP('home', chat_id)
+    account_status = db.db.checkIsUserActive(chat_id)
+    
+    if account_status == [] or account_status[0][0] is None:
+        db.db.addUserFromBotToDB(uuid.uuid4().hex, chat_id)
+        await context.bot.send_message(chat_id, text='بازگشت به صفحه اصلی انجام شد')
+        db.db.changeUserSTEP('get-user-username-to-signin', chat_id)   
+    elif account_status[0][0] and account_status[0][1]:
+        await context.bot.send_message(chat_id, text='بازگشت به صفحه اصلی انجام شد \nیکی از گزینه های زیر را انتخاب کنید', reply_markup=reply_markup_start_user)
+        db.db.changeUserSTEP('home', chat_id)
+        
 
 
 
 # Start bot
 async def start(_update, context, _text, _STEP, chat_id):
-    db.db.addUserFromBotToDB(uuid.uuid4().hex, chat_id)
-    await context.bot.send_message(chat_id=chat_id, text='سلام به ربات {} خوش آمدید \nلطفا نام کاربری خود را وارد کنید :'.format(config.configs['SYSTEM_NAME']))
-    db.db.changeUserSTEP('get-user-username-to-signin', chat_id)
-    return
+    account_status = db.db.checkIsUserActive(chat_id)
+    
+    if account_status == [] or account_status[0][0] is None:
+        db.db.addUserFromBotToDB(uuid.uuid4().hex, chat_id)
+        await context.bot.send_message(chat_id=chat_id, text='سلام به ربات {} خوش آمدید \nلطفا نام کاربری خود را وارد کنید :'.format(config.configs['SYSTEM_NAME']))
+        db.db.changeUserSTEP('get-user-username-to-signin', chat_id)
+        return
+    elif account_status[0][0] and account_status[0][1]:
+        await context.bot.send_message(chat_id, text='خوش آمدید \nیکی از گزینه های زیر را انتخاب کنید', reply_markup=reply_markup_start_user)
+        db.db.changeUserSTEP('home', chat_id)
+        return
+
 
 
 
@@ -41,12 +56,14 @@ commands = [
     
     [r"/send-my-location", r".+", bot_process.send_my_location],
     
+    [r"/record-souvenir-photo", r".+", bot_process.record_souvenir_photo],
+    
     [r".+", r"get-user-username-to-signin", bot_process.get_user_username_to_signin],
     [r".+", r"get-user-password-to-signin", bot_process.get_user_password_to_signin],
     
     [r".+", r"get-user-location", bot_process.get_user_location],
-    [r".+", r"get-user-caption-location", bot_process.get_user_caption_location],
     
+    [r".+", r"handle-record-souvenir-photo", bot_process.handle_record_souvenir_photo],
 ]
 
 
@@ -64,8 +81,12 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=chat_id, text='لطفا درخواست خود را تکمیل یا بر روی بازگشت به صفحه اصلی ضربه بزنید.')
             return
     except:
-        text = update.message.text
-        chat_id = update.message.chat_id
+        try:
+            chat_id = update.effective_chat.id
+            text = update.callback_query.data
+        except:
+            text = update.message.text
+            chat_id = update.message.chat_id
         
     if text is None:
         # user sent media or location, not a text
@@ -89,7 +110,9 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     if not valid_command:
         await context.bot.send_message(chat_id=chat_id, text='لطفا یک دستور معتبر وارد کنید!')
-                
+           
+           
+
 
 def main():
     

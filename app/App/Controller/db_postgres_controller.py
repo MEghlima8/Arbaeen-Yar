@@ -55,16 +55,16 @@ class PostgreSQL:
 
 
 # Add user to karavan_users table
-    def addUserToKaravanUsers(self, karavan_users_uuid, user_uuid, karavan_uuid):
-        query = "INSERT INTO karavan_users (uuid,user_uuid,karavan_uuid) VALUES (%s, %s, %s)"
-        args = (karavan_users_uuid, user_uuid, karavan_uuid)
+    def addUserToKaravanUsers(self, karavan_users_uuid, user_uuid, karavan_uuid, whois):
+        query = "INSERT INTO karavan_users (uuid,user_uuid,karavan_uuid,whois) VALUES (%s, %s, %s, %s)"
+        args = (karavan_users_uuid, user_uuid, karavan_uuid, whois)
         self.execute_query(query, args)
         return 'true'
         
     
         
     def checkMatchUsernamePassword(self,username,password):
-        query = "select uuid,is_manager,is_user,active from users WHERE username=%s AND password=%s"
+        query = "SELECT uuid,is_manager,is_user,active FROM users WHERE username=%s AND password=%s"
         args = (username, password)
         res = self.execute_query(query, args).fetchall()
         return res
@@ -75,6 +75,12 @@ class PostgreSQL:
         args = (username,)
         res = self.execute_query(query,args).fetchone()[0]
         return res
+    
+    def getUserUUIDFromChatId(self, chat_id):
+        query = "SELECT uuid FROM users WHERE chat_id=%s"
+        args = (chat_id,)
+        res = self.execute_query(query,args).fetchone()[0]
+        return res        
     
     
     def getKaravansInfo(self,manager_uuid):
@@ -87,6 +93,12 @@ class PostgreSQL:
     def getKaravanUUID(self, manager_uuid):
         query = "SELECT uuid FROM karavan WHERE manager_uuid=%s"
         args = (manager_uuid,)
+        res = self.execute_query(query,args).fetchone()[0]
+        return res
+    
+    def getKaravanUUIDFromUser(self, user_uuid):
+        query = "SELECT karavan_uuid FROM karavan_users WHERE user_uuid=%s"
+        args = (user_uuid,)
         res = self.execute_query(query,args).fetchone()[0]
         return res
     
@@ -142,7 +154,7 @@ class PostgreSQL:
 
  
     def getUserSTEP(self,user_id):
-        query = "select step from users WHERE chat_id=%s"
+        query = "SELECT step FROM users WHERE chat_id=%s"
         args = (user_id, )
         text = self.execute_query(query, args).fetchall()[0]
         return text       
@@ -156,7 +168,7 @@ class PostgreSQL:
 
     
     def checkWhoIs(self,chat_id):
-        query = "select is_manager,is_user from users WHERE chat_id=%s"
+        query = "SELECT is_manager,is_user FROM users WHERE chat_id=%s"
         args = (chat_id, )
         text = self.execute_query(query, args).fetchall()
         return text
@@ -168,7 +180,7 @@ class PostgreSQL:
         return 'true'
         
     def activeUserAccount(self, uuid, chat_id):
-        query = "DELETE FROM users where chat_id = %s"
+        query = "DELETE FROM users WHERE chat_id = %s"
         args = (chat_id,)
         res = self.execute_query(query, args)
         query = "UPDATE users set chat_id=%s , active='true', step='home' WHERE uuid=%s"
@@ -177,20 +189,38 @@ class PostgreSQL:
         return res
 
     
-    def addReqToDb(self, uuid, user_uuid, type, j_params, time, status):
-        query = "INSERT INTO request (uuid, user_uuid, type, params, time, status) VALUES (%s , %s , %s , %s , %s , %s) RETURNING uuid"
-        args =(uuid, user_uuid, type, j_params, time, status)
+    def addReqToDb(self, uuid, user_uuid, karavan_uuid, type, j_params, time, status):
+        query = "INSERT INTO request (uuid, user_uuid, karavan_uuid, type, params, time, status) VALUES (%s , %s , %s , %s , %s , %s, %s) RETURNING uuid"
+        args =(uuid, user_uuid, karavan_uuid, type, j_params, time, status)
         req_uuid = self.execute_query(query, args).fetchall()[0][0]
         return req_uuid    
         
 
-
-# web functions
+    def checkIsUserActive(self,chat_id):
+        query = "SELECT is_user, active FROM users WHERE chat_id=%s"
+        args = (chat_id, )
+        account_status = self.execute_query(query, args).fetchall()
+        return account_status
+    
+    
+    def getKaravanNameFromUserInfo(self, user_uuid):
+        # Get karavan uuid
+        query = "SELECT karavan_uuid FROM karavan_users WHERE user_uuid=%s "
+        args = (user_uuid, )
+        karavan_uuid = self.execute_query(query, args).fetchone()[0]
+        
+        # Get karavan name
+        query = "SELECT name FROM karavan WHERE uuid=%s "
+        args = (karavan_uuid, )
+        karavan_name = self.execute_query(query, args).fetchone()[0]
+        return karavan_name
+        
+        
 
     def getAllKaravanUsersInfo(self, karavan_uuid):
         query = """SELECT users.uuid, users.chat_id, users.fullname, users.username, users.password, users.active FROM users
                     INNER JOIN karavan_users ON users.uuid=karavan_users.user_uuid 
-                    WHERE karavan_users.karavan_uuid=%s AND users.is_user='true'"""
+                    WHERE karavan_users.karavan_uuid=%s AND users.is_user='true' ORDER BY users.counter ASC"""
         args =(karavan_uuid,)
         info = self.execute_query(query,args).fetchall()
         return info
@@ -209,11 +239,20 @@ class PostgreSQL:
 
 
     def checkDuplicateUsername(self, username):
-        query = 'select username from users where username=%s'
+        query = "SELECT username FROM users WHERE username=%s"
         args = (username,)
         res = self.execute_query(query,args).fetchone()
         return res
 
+
+    def getKaravanRequestInfo(self, karavan_uuid, type):
+        query = """SELECT users.fullname, users.username, request.uuid, request.time, request.params FROM users
+                    INNER JOIN request ON users.uuid=request.user_uuid 
+                    WHERE request.karavan_uuid=%s AND users.is_user='true' AND
+                    request.type=%s ORDER BY request.counter DESC"""
+        args = (karavan_uuid, type)
+        res = self.execute_query(query,args).fetchall()
+        return res
 
 db = PostgreSQL(host=host, database=database, user=user, password=password, port=port)
 db.connect()

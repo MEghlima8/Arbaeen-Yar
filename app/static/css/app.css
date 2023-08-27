@@ -82,8 +82,21 @@
 }
 
 #map { 
-  height: 250px; 
-  width: 450px;
+  height: 370px; 
+  width: 270px;
+  margin-right: 4.8%;
+}
+
+.leaflet-control-zoom {
+  display: none;
+}
+
+.leaflet-bar {
+  display: none;
+}
+
+.leaflet-control{
+  display: none;
 }
 
 
@@ -135,4 +148,9 @@ select::-ms-expand {
 
 .swal2-title {
   font-size: 2rem !important;
+}
+
+
+.activePanel {
+  background-color: #255858fa !important;
 }

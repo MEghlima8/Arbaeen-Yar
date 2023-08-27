@@ -18,8 +18,12 @@ configs = {
     'DB_PASSWORD' : os.getenv('DB_PASSWORD') ,
     'DB_PORT' : os.getenv('DB_PORT') ,
     
+    'RABBITMQ_SERVICE_NAME': os.getenv('RABBITMQ_SERVICE_NAME') ,
+    
     # Bot
     'BOT_TOKEN': os.getenv('BOT_TOKEN') ,
     'BASE_URL': os.getenv('BASE_URL') ,
     'BASE_FILE_URL': os.getenv('BASE_FILE_URL') ,
+    
+    'UPLOAD_USER_FILE': os.getenv('UPLOAD_USER_FILE'),
 }

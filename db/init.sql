@@ -29,17 +29,19 @@ CREATE TABLE karavan_users (
     karavan_uuid VARCHAR(255) NOT NULL ,
     whois VARCHAR(50) ,
     FOREIGN KEY(user_uuid) REFERENCES users(uuid) ,
-    FOREIGN KEY(karavan_uuid) REFERENCES karavan(uuid) 
+    FOREIGN KEY(karavan_uuid) REFERENCES karavan(uuid)
 );
 
 
 CREATE TABLE request (
-    id SERIAL PRIMARY KEY ,
+    counter SERIAL PRIMARY KEY ,
     uuid VARCHAR (255) ,
     user_uuid VARCHAR (255) NOT NULL ,
+    karavan_uuid VARCHAR(255) NOT NULL ,
     type VARCHAR (50) NOT NULL ,
     params JSONB NOT NULL ,
-    time VARCHAR (255) ,
+    time JSONB ,
     status VARCHAR (50) ,
-    FOREIGN KEY(user_uuid) REFERENCES users(uuid)
+    FOREIGN KEY(user_uuid) REFERENCES users(uuid) ,
+    FOREIGN KEY(karavan_uuid) REFERENCES karavan(uuid)
 );

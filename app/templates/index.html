@@ -22,14 +22,17 @@
     <!-- Sign up dependencies -->
     <!-- Waves Effect Css -->
     <link href="../static/css/waves.css" rel="stylesheet" />
+
     <!-- Animation Css -->
     <link href="../static/css/animate.css" rel="stylesheet" />
 
     <!-- Dashboard dependencies -->
     <!-- Bootstrap RTL Css -->
     <link href="../static/css/bootstrap-rtl.min.css" rel="stylesheet">
+
     <!-- Custorm RTL Css -->
     <link href="../static/css/style-rtl.css" rel="stylesheet">
+
     <!-- AdminBSB Themes. You can choose a theme from css/themes instead of get all themes -->
     <link href="../static/css/all-themes.css" rel="stylesheet" />
     
@@ -39,7 +42,6 @@
 
 </head>
 <body>
-    <!-- <div id="map"></div> -->
     <div id="app">    
         
         <!-- Signin manager panel -->
@@ -144,17 +146,6 @@
             
             <!-- Top Bar -->
             <nav class="navbar">
-                <div v-if="manager_panel !== 'admin-user-reqs' && manager_panel !== 'admin-dashboard'" class="topnav1">
-                    <div class="search-container1">
-                      <form>
-                        <input v-if="manager_panel=='manager-dashboard'" v-model="search_bar_val" type="text" placeholder="جستجو..." style="font: 1.25rem/3">
-                        <button @click.prevent="onClick_searchBarAdvs()" type="submit">
-                            <span class="material-symbols-outlined">search</span>
-                        </i></button>
-                      </form>
-                    </div>
-                </div>                  
-                
                 <div class="container-fluid">
                     <div class="navbar-header">
                         <a href="javascript:void(0);" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false"></a>
@@ -164,6 +155,7 @@
                 </div>
             </nav>
             <!-- #Top Bar -->
+
             <section>
                 <!-- Right Sidebar -->
                 <aside id="leftsidebar" class="sidebar">
@@ -172,7 +164,7 @@
                         <ul class="list">
                             <li class="header">ناوبری اصلی</li>
                             <li>
-                                <a style="background-color:darkcyan;" href="#">
+                                <a :class="{ activePanel: isActivePanel('manager-dashboard') }"  @click.prevent="change_panel('manager', 'manager-dashboard')" style="background-color:darkcyan;" href="#">
                                     <i style="color: darkgray" class="material-icons">home</i>
                                     <span style="color:aliceblue;">صفحه اصلی</span>
                                 </a>
@@ -191,7 +183,7 @@
                                     <span style="color:aliceblue;">افزودن عضو به کاروان</span>
                                 </a>
                             </li>
-
+                            <!--
                             <div style="padding-top:3px"></div>
                             <li>
                                 <a style="background-color:darkcyan;" href="javascript:void(0);" class="toggled">
@@ -199,20 +191,23 @@
                                     <span style="color:aliceblue;">دلنوشته ها</span>
                                 </a>
                             </li>
+                            -->
                             <div style="padding-top:3px"></div>
                             <li>
-                                <a style="background-color:darkcyan;" href="javascript:void(0);" class="toggled">
+                                <a :class="{ activePanel: isActivePanel('souvenir-photos') }" @click.prevent="getSouvenirPhotos(1)" style="background-color:darkcyan;" href="javascript:void(0);" class="toggled">
                                     <i style="color: darkgray" class="material-icons">photo_library</i>
                                     <span style="color:aliceblue;">عکس های یادگاری</span>
                                 </a>
                             </li>
                             <div style="padding-top:3px"></div>
                             <li>
-                                <a style="background-color:darkcyan;" href="javascript:void(0);" class="toggled">
+                                <a :class="{ activePanel: isActivePanel('registered-locations') }" @click.prevent="getRegisteredLocations(1)" style="background-color:darkcyan;" href="javascript:void(0);" class="toggled">
                                     <i style="color: darkgray" class="material-icons">person_pin_circle</i>
                                     <span style="color:aliceblue;">موقعیت های مکانی</span>
                                 </a>
                             </li>
+                            <div style="padding-top:8px"></div>
+                            <div v-if="show_location == 'true'" id="map"></div>
                         </ul>
                     </div>
                     <!-- #Menu -->
@@ -239,9 +234,12 @@
                             </div>
                             
                             <br/>
-                            <div v-if="users_info_panel == 'true'" class="card">
+                            <div v-if="show_panel == 'true'" class="card">
+                                
                                 <div class="body panels">
+                                    <h3>اطلاعات اعضای کاروان<h3>
                                     <div class="table-responsive">
+                                        
                                         <table class="table table-hover dashboard-task-infos">
                                             <thead>
                                                 <tr>
@@ -249,7 +247,9 @@
                                                     <th>شناسه</th>
                                                     <th>نام کاربری</th>
                                                     <th>رمز عبور</th>
+                                                    <!--
                                                     <th>فعالیت های کاربر</th>
+                                                    -->
                                                     <th>وضعیت حساب</th>
                                                 </tr>
                                             </thead>
@@ -259,19 +259,21 @@
                                                     <td>${ user[0] }$</td>
                                                     <td>${ user[3] }$</td>
                                                     <td>${ user[4] }$</td>
+                                                    <!--
                                                     <td > <a @click.prevent="getUserRequests(user[0])" target="_blank" href="#" >مشاهده</a> </td>
+                                                    -->
                                                     <td>${ user[5] }$</td>
                                                 </tr>
                                             </tbody>
                                         </table>
                                     </div>
-                                    <!-- <div class="pagination">
+                                    <div class="pagination">
                                         <a v-for="(page_num,index) in pages"
                                             :key="index"
-                                            @click.prevent="admin_resUsersInfo(index + 1, 'admin-res-add-calc')"
+                                            @click.prevent="getKaravanUsersInfo(index + 1)"
                                             :class="{ active: isActivePage(index + 1) }" 
                                             href="#">${ page_num }$</a>
-                                    </div> -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -279,6 +281,140 @@
                 </div>
             </section>
             <!-- # admin show all users -->
+
+
+            <!-- Manager show souvenir photos -->
+            <section v-if="manager_panel == 'souvenir-photos'" class="content">
+                <div class="container-fluid">
+                    <div class="row clearfix">
+                        <!-- Task Info -->
+                        <div class="col-xs-12 col-sm-12">
+
+                            <div class="header">
+                                <label for="category">کاروان مورد نظر را انتخاب کنید</label>
+                                <div class="select">
+                                    <select v-model="selected_karavan_uuid" @change="changeSelectedKaravan">
+                                        <option value="">انتخاب کاروان</option>
+                                        <option v-for="karavan in manager_karavans_info" :value=karavan[0] >${karavan[1]}$</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <br/>
+                            <div v-if="show_panel == 'true'" class="card">
+                                <div class="body panels">
+                                    <h3>عکس های یادگاری<h3>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover dashboard-task-infos">
+                                            <thead>
+                                                <tr>
+                                                    <th>نام</th>
+                                                    <th>نام کاربری</th>
+                                                    <th>شناسه</th>
+                                                    <th>تاریخ</th>
+                                                    <th>زمان</th>
+                                                    <th>عکس دریافتی</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="photo in souvenir_photos">
+                                                    <td>${ photo[0] }$</td>
+                                                    <td>${ photo[1] }$</td>
+                                                    <td>${ photo[2] }$</td>
+                                                    <td>${ photo[3]['date'] }$</td>
+                                                    <td>${ photo[3]['time'] }$</td>
+                                                    <td> <a :href="photo[4]['path']" target="_blank">نمایش</a> </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="pagination">
+                                        <a v-for="(page_num,index) in pages"
+                                            :key="index"
+                                            @click.prevent="getSouvenirPhotos(index + 1)"
+                                            :class="{ active: isActivePage(index + 1) }" 
+                                            href="#">${ page_num }$</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- # Manager show souvenir photos -->
+
+
+            <!-- Manager show user locations -->
+            <section v-if="manager_panel == 'registered-locations'" class="content">
+                <div class="container-fluid">
+                    <div class="row clearfix">
+                        <!-- Task Info -->
+                        <div class="col-xs-12 col-sm-12">
+                            
+                            <div class="header">
+                                <label for="category">کاروان مورد نظر را انتخاب کنید</label>
+                                <div class="select">
+                                    <select v-model="selected_karavan_uuid" @change="changeSelectedKaravan">
+                                        <option value="">انتخاب کاروان</option>
+                                        <option v-for="karavan in manager_karavans_info" :value=karavan[0] >${karavan[1]}$</option>
+                                    </select>
+                                </div>
+                            </div>    
+
+                            <br/>
+                            <div v-if="show_panel == 'true'" class="card">
+
+                                <div class="body panels">
+                                    <h3>موقعیت های مکانی ثبت شده<h3>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover dashboard-task-infos">
+                                            <thead>
+                                                <tr>
+                                                    <th>نام</th>
+                                                    <th>نام کاربری</th>
+                                                    <th>شناسه</th>
+                                                    <th>تاریخ</th>
+                                                    <th>زمان</th>
+                                                    <th>طول جغرافیایی</th>
+                                                    <th>عرض جغرافیایی</th>
+                                                    <th>نمایش روی نقشه</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="location in registered_locations">
+                                                    <td>${ location[0] }$</td>
+                                                    <td>${ location[1] }$</td>
+                                                    <td>${ location[2] }$</td>
+                                                    <td>${ location[3]['date'] }$</td>
+                                                    <td>${ location[3]['time'] }$</td>
+                                                    <td>${ location[4]['longitude'] }$</td>
+                                                    <td>${ location[4]['latitude'] }$</td>
+                                                    <td> <a @click.prevent="showLocation(location[4]['longitude'], location[4]['latitude'])" href="#">
+                                                        <span v-if="show_location == 'true'" >بستن</span>
+                                                        <span v-else >نمایش</span>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <!--
+                                        <div v-if="show_location" id="map"></div>
+                                        -->
+                                    </div>
+                                    <div class="pagination">
+                                        <a v-for="(page_num,index) in pages"
+                                            :key="index"
+                                            @click.prevent="getRegisteredLocations(index + 1)"
+                                            :class="{ active: isActivePage(index + 1) }"
+                                            href="#">${ page_num }$</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- # Manager show user locations -->
 
 
 

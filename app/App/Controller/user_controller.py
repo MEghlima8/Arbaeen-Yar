@@ -19,7 +19,6 @@ class Manager:
         if check_user_info == True:
             manager_uuid = uuid.uuid4().hex         
             db.db.signupManager(manager_uuid, self.username, self.fullname, self.password)
-
             res = {"status":"True"}
             return res
         
@@ -45,17 +44,14 @@ class User:
         self.password = password
 
     # Do signup user
-    def signup(self,manager_username):
+    def signup(self,karavan_uuid):
         valid = Valid(self.username, self.fullname, self.password)
         check_user_info = valid.signup()
         
         if check_user_info == True:
             user_uuid = uuid.uuid4().hex  
             db.db.signupUser(user_uuid, self.username, self.fullname, self.password)
-            
-            manager_uuid = db.db.getUserUUID(manager_username)
-            karavan_uuid = db.db.getKaravanUUID(manager_uuid)
-            db.db.addUserToKaravanUsers(uuid.uuid4().hex, user_uuid, karavan_uuid)
+            db.db.addUserToKaravanUsers(uuid.uuid4().hex, user_uuid, karavan_uuid, 'user')
 
             res = {"status":"True"}
             return res

@@ -1,9 +1,25 @@
-from App.Controller.keyboard import reply_markup_start, reply_markup_start_manager, reply_markup_cancel
+from App.Controller.keyboard import reply_markup_cancel
 from App.Controller import db_postgres_controller as db
 import uuid
 import json
 from datetime import datetime
 from jdatetime import datetime as jdatetime
+from App import config
+import os
+import requests
+
+
+# Save media in local storage
+def save_media(path, mime_type, user_id):
+    config_path = '.' + config.configs["UPLOAD_USER_FILE"] + str(user_id) + '/'
+    if not os.path.exists(config_path):
+        os.makedirs(config_path)
+        
+    response = requests.get(path)
+    path = config_path + uuid.uuid4().hex + '.' + mime_type
+    with open(path, 'wb') as file:
+        file.write(response.content)
+    return path
 
 
 def get_datetime():
@@ -29,7 +45,6 @@ async def get_user_username_to_signin(_update, context, text, _STEP, chat_id):
     await context.bot.send_message(chat_id=chat_id, text='لطفا رمز عبور خود را وارد کنید :')
     return 
 
-
 # Signin user to account - Get user password and check info
 async def get_user_password_to_signin(_update, context, text, _STEP, chat_id):
     username = db.db.getFirstTextMsg(chat_id)
@@ -37,12 +52,15 @@ async def get_user_password_to_signin(_update, context, text, _STEP, chat_id):
     user_info = db.db.checkMatchUsernamePassword(username, password)
     if user_info != [] and user_info[0][2] == 'true':
         user_uuid = user_info[0][0]
+        
         # Remove the additional user record that created and update info of the user that created by manager.
         db.db.activeUserAccount(user_uuid,chat_id)
-        await context.bot.send_message(chat_id=chat_id, text='اطلاعات شما با موفقیت تایید شد \nاز حالا میتوانید از امکانات ربات استفاده کنید',reply_markup=reply_markup_cancel)
+        karavan_name = db.db.getKaravanNameFromUserInfo(user_uuid)
+        await context.bot.send_message(chat_id=chat_id, text='به {} خوش آمدید \n حالا میتوانید از امکانات ربات استفاده کنید'.format(karavan_name) , reply_markup=reply_markup_cancel)
     else:
+        db.db.changeUserSTEP('get-user-username-to-signin', chat_id)
         # Wrong username and password
-        await context.bot.send_message(chat_id=chat_id, text='نام کاربری یا رمز عبور اشتباه می باشد',reply_markup=reply_markup_cancel)
+        await context.bot.send_message(chat_id=chat_id, text='نام کاربری یا رمز عبور اشتباه می باشد \nنام کاربری را مجدد وارد کنید :')
         
     
 # Send my location - send message to user to send location
@@ -50,7 +68,6 @@ async def send_my_location(_update, context, _text, _STEP, chat_id):
     db.db.changeUserSTEP('get-user-location', chat_id)
     await context.bot.send_message(chat_id=chat_id, text='لطفا موقعیت مکانی خود را ارسال کنید',reply_markup=reply_markup_cancel)
     return
-
 
 # Send my location - get user location
 async def get_user_location(update, context, _text, _STEP, chat_id):
@@ -60,23 +77,42 @@ async def get_user_location(update, context, _text, _STEP, chat_id):
     except:
         await context.bot.send_message(chat_id=chat_id, text='لطفا موقعیت مکانی خودتان را ارسال کنید', reply_markup=reply_markup_cancel)
         return
-    location = json.dumps({
+    params = json.dumps({
                         "latitude": latitude ,
                         "longitude": longitude,
                         })
-    db.db.changeFirstTextMsg(location,chat_id)
-    db.db.changeUserSTEP('get-user-caption-location', chat_id)
-    await context.bot.send_message(chat_id=chat_id, text='لطفا توضیحاتی را در مورد موقعیت مکانی خود شرح دهید برای مثال : \n- تا یک ساعت دیگر در این مکان استراحت خواهم کرد \n- در حال حرکت به سمت حرم هستم',reply_markup=reply_markup_cancel)
-    
-    
-# Send my location - get user caption location and store in database   
-async def get_user_caption_location(_update, context, location_caption, _STEP, chat_id):
     db.db.changeUserSTEP('home', chat_id)
-    location = db.db.getFirstTextMsg(chat_id)
-    params = json.loads(location)
-    params["caption"] = location_caption
-    params = json.dumps(params)
     j_date_time = get_datetime()
-    user_uuid = db.db.getUserUUID(chat_id)
-    db.db.addReqToDb(uuid.uuid4().hex, user_uuid, '/send-my-location', params, j_date_time, 'done')
+    user_uuid = db.db.getUserUUIDFromChatId(chat_id)
+    karavan_uuid = db.db.getKaravanUUIDFromUser(user_uuid)
+    db.db.addReqToDb(uuid.uuid4().hex, user_uuid, karavan_uuid, '/send-my-location', params, j_date_time, 'done')
     await context.bot.send_message(chat_id=chat_id, text='موقعیت مکانی شما با موفقیت ثبت شد', reply_markup=reply_markup_cancel)
+    
+    
+# Record a souvenir photo - get photo
+async def record_souvenir_photo(_update, context, _text, _STEP, chat_id):
+    db.db.changeUserSTEP('handle-record-souvenir-photo', chat_id)
+    await context.bot.send_message(chat_id=chat_id, text='تصویر مورد نظر را ارسال کنید :')
+
+# Record a souvenir photo - save photo
+async def handle_record_souvenir_photo(update, context, _text, _STEP, chat_id):
+    # Check the user sent image or not
+    mime_type = update.message.document.mime_type.split('/')  # 'image/png'
+    if mime_type[0] != 'image':
+        await context.bot.send_message(chat_id=chat_id, text='لطفا فقط تصویر ارسال کنید',reply_markup=reply_markup_cancel)
+        return
+    
+    file = await context.bot.get_file(update.message.document)
+    j_date_time = get_datetime()
+    
+    # save image in local
+    path = save_media(file.file_path, mime_type[1], chat_id)
+    params = json.dumps({"path" : path })
+    
+    user_uuid = db.db.getUserUUIDFromChatId(chat_id)
+    karavan_uuid = db.db.getKaravanUUIDFromUser(user_uuid)
+    
+    # Add request to database
+    db.db.addReqToDb(uuid.uuid4().hex, user_uuid, karavan_uuid, '/souvenir-photo', params, j_date_time, 'done')
+    await context.bot.send_message(chat_id=chat_id, text='تصویر با موفقیت ثبت شد',reply_markup=reply_markup_cancel)
+    db.db.changeUserSTEP('home', chat_id)
