@@ -27,14 +27,6 @@ def index():
     return render_template('index.html')
 
 
-
-# @app.route('/get-user-locations', methods = ['POST'])
-# def get_user_locations():
-#     j_body_data = request.get_json()
-#     user_uuid = j_body_data['user_uuid']
-#     return web_process.getUserLocations(user_uuid)
-
-
 @app.route('/add-new-user-to-karavan', methods=['POST'])    
 def add_new_user_to_karavan():
     j_body_data = request.get_json()

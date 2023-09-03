@@ -17,16 +17,3 @@ def createNewKaravan(karavan_name, manager_username):
     db.db.createNewKaravan(karavan_uuid, karavan_name, manager_uuid)
     db.db.addUserToKaravanUsers(uuid.uuid4().hex, manager_uuid, karavan_uuid, 'manager')
     return 'true'
-
-
-# def getUserLocations(user_uuid):
-#     user_locations = db.db.getUserLocations(user_uuid)
-#     if user_locations == []: 
-#         result = json.dumps(
-#             {"status-code": 204, "result":"no location"}
-#             )  
-#     else:
-#         result = json.dumps(
-#             {"status-code":200, "result":user_locations}
-#             )
-#     return result

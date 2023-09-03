@@ -70,7 +70,6 @@ commands = [
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Get chat id and message text
-    # import pdb; pdb.set_trace()
     try:
         chat_id = update.effective_chat.id
         text = update.callback_query.data

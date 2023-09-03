@@ -59,14 +59,3 @@ class User:
         res = {"status":"False", "result": check_user_info}
         return res
         
-        
-#     def whoIs(self):
-#         try:
-#             manager,user = db.db.checkWhoIs(self.chat_id)[0]
-#             if manager == 'true':
-#                 return 'manager'
-#             elif user == 'true':
-#                 return 'user'
-#             return 'false'
-#         except:
-#             return 'false'
