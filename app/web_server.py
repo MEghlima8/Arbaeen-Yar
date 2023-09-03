@@ -87,6 +87,20 @@ def get_souvenir_photos():
     return result 
 
 
+@app.route('/get-user-all-locations', methods=['POST'])
+def get_user_all_locations():
+    j_body_data = request.get_json()
+    res = db.db.getUserLocations(j_body_data['user_uuid'])
+
+    if res == []:
+        result = {"status-code":204 , "result":'Without registered location'}
+    else:
+        page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
+        result = {"status-code":200 , "result":page_items, "count_pages":count_all_pages}
+
+    return result
+
+
 @app.route('/get-registered-locations', methods=['POST'])
 def get_registered_locations():
     j_body_data = request.get_json()

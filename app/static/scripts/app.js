@@ -37,6 +37,69 @@ app_methods.getSouvenirPhotos = function(page){
 }
 
 
+// retrieve all registered locations of the user
+app_methods.showUserAllLocations = function(user_uuid,page){
+    data = {'user_uuid': user_uuid, 'page_index':page}
+    console.log('data: ',data)
+    axios.post('/get-user-all-locations', data).then(response => {  
+        console.log('response: ',response)
+        if (response.data['status-code'] == 200) {
+            this.activeIndexPage = page;
+            this.pages = response.data['count_pages']
+            this.change_panel('manager', 'user-all-locations')
+            
+            result = response.data['result']
+            for (var i=0 ; i < result.length;i++ ){
+                result[i].unshift(i+1)      
+            }
+            this.userAllLocations = result
+
+            this.$nextTick(() => {
+                var map = L.map('user_all_locs_map').setView([result[0][6]['latitude'], result[0][6]['longitude']], 14);
+                
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 19,
+                }).addTo(map);
+
+                for (var i=0 ; i < result.length;i++ ){
+                    var marker = L.marker([ result[i][6]['latitude'], result[i][6]['longitude'] ]).addTo(map);
+                    marker.bindPopup("</h3>شماره موقعیت : " + result[i][0] + '</h3>');
+                }
+            })
+
+            console.log(response.data)
+        }
+        // Without registered location
+        else{
+            Swal.fire({title:'بدون موقعیت مکانی' ,text:'کاربر موقعیت مکانی ثبت شده ای ندارد', icon:'info', confirmButtonText:'تایید'})
+        }
+    })    
+}
+
+
+app_methods.showLocation = function(longitude,latitude){
+    if (this.show_location == 'true'){
+        this.show_location = 'false';
+    }
+    else {
+        this.show_location = 'true';
+        this.$nextTick(() => {
+            var map = L.map('map').setView([latitude, longitude ], 14);
+            
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19,
+            }).addTo(map);
+            L.marker([latitude, longitude]).addTo(map);
+        })
+    }
+}
+
+
+
+
+// retrieve karavan users locations
 app_methods.getRegisteredLocations = function(page){
     if (this.selected_karavan_uuid == ''){
         Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
@@ -100,38 +163,6 @@ app_methods.changeSelectedKaravan = function(){
     this.show_panel = 'true'    
 }
 
-// setTimeout(()=>{this.showLocation()}, 100)
-
-
-app_methods.showLocation = function(longitude,latitude){
-    if (this.show_location == 'true'){
-        this.show_location = 'false';
-    }
-    else {
-        this.show_location = 'true';
-        // debugger
-        this.$nextTick(() => {
-            var map = L.map('map').setView([latitude, longitude ], 14);
-            
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                maxZoom: 19,
-            }).addTo(map);
-            var marker = L.marker([latitude, longitude]).addTo(map);
-        })
-    }
-}
-
-
-// app_methods.getUserLocations = function(user_uuid){
-//     data = {'user_uuid': user_uuid}
-//     axios.post('/get-user-locations', data).then(response => {  
-//         if (response.data['status-code'] == 200) {
-//             console.log(response.data)
-//         }
-//         else { Swal.fire({title:'ثبت نشده' ,text:'این عضو تا به حال موقعیت مکانی خود را ارسال نکرده است', icon:'info', confirmButtonText:'تایید'}) }
-//     })
-// }
 
 app_methods.addUserToKaravan = function(){
     if (this.selected_karavan_uuid == ''){
@@ -262,7 +293,6 @@ Vue.createApp({
         show_panel: '',  // In the dashboard
 
         manager_karavans_info: '',
-        // current_karavan_name: '',
         users_info:'' ,
 
         //  Sign in/up manager Info
@@ -270,7 +300,7 @@ Vue.createApp({
         password: '',
         fullname: '',
 
-        // user - in signup user to karavan
+        // user - signup user to karavan
         user_fullname: '',
         user_username: '',
 
@@ -289,6 +319,8 @@ Vue.createApp({
 
         souvenir_photos: '',
         registered_locations: '',
+
+        userAllLocations: '',
     } },
     
     delimiters: ["${", "}$"],    

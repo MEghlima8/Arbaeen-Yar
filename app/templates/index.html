@@ -247,9 +247,7 @@
                                                     <th>شناسه</th>
                                                     <th>نام کاربری</th>
                                                     <th>رمز عبور</th>
-                                                    <!--
-                                                    <th>فعالیت های کاربر</th>
-                                                    -->
+                                                    <th>موقعیت های مکانی</th>
                                                     <th>وضعیت حساب</th>
                                                 </tr>
                                             </thead>
@@ -259,9 +257,7 @@
                                                     <td>${ user[0] }$</td>
                                                     <td>${ user[3] }$</td>
                                                     <td>${ user[4] }$</td>
-                                                    <!--
-                                                    <td > <a @click.prevent="getUserRequests(user[0])" target="_blank" href="#" >مشاهده</a> </td>
-                                                    -->
+                                                    <td > <a @click.prevent="showUserAllLocations(user[0],1)" target="_blank" href="#" >مشاهده</a> </td>
                                                     <td>${ user[5] }$</td>
                                                 </tr>
                                             </tbody>
@@ -344,7 +340,7 @@
             <!-- # Manager show souvenir photos -->
 
 
-            <!-- Manager show user locations -->
+            <!-- Manager show all users locations -->
             <section v-if="manager_panel == 'registered-locations'" class="content">
                 <div class="container-fluid">
                     <div class="row clearfix">
@@ -397,9 +393,7 @@
                                                 </tr>
                                             </tbody>
                                         </table>
-                                        <!--
-                                        <div v-if="show_location" id="map"></div>
-                                        -->
+
                                     </div>
                                     <div class="pagination">
                                         <a v-for="(page_num,index) in pages"
@@ -411,6 +405,59 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+            <!-- # Manager show user locations -->
+
+
+
+            <!-- Manager show user all locations -->
+            <section v-if="manager_panel == 'user-all-locations'" class="content">
+
+                <div class="container-fluid">
+                    <div class="row clearfix">
+
+                        <div class="col-xs-6 col-sm-6">
+                            <div class="card">
+                                <div class="body panels locations-panel">
+                                    <h3>موقعیت های مکانی ثبت شده<h3>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover dashboard-task-infos">
+                                            <thead>
+                                                <tr>
+                                                    <th>شماره موقعیت</th>
+                                                    <th>تاریخ</th>
+                                                    <th>زمان</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="location in userAllLocations">
+                                                    <td>${ location[0] }$</td>
+                                                    <td>${ location[7]['date'] }$</td>
+                                                    <td>${ location[7]['time'] }$</td>
+                                                </tr>
+                                                                       
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="pagination" style="padding-right: 215px;">
+                                        <a v-for="(page_num,index) in pages"
+                                            :key="index"
+                                            @click.prevent="showUserAllLocations(userAllLocations[0][3], index + 1)"
+                                            :class="{ active: isActivePage(index + 1) }"
+                                            href="#">${ page_num }$</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xs-6 col-sm-6">
+                            <div id="user_all_locs_map" class="userAllLocs" ></div>
+                            <br/>
+                            <a @click.prevent="change_panel('manager','manager-dashboard')" class="btn-cancel">بازگشت به صفحه اصلی</a>
+                        </div>
+
                     </div>
                 </div>
             </section>
