@@ -42,6 +42,7 @@ CREATE TABLE request (
     params JSONB NOT NULL ,
     time JSONB ,
     status VARCHAR (50) ,
+    client_service VARCHAR(255) ,
     FOREIGN KEY(user_uuid) REFERENCES users(uuid) ,
     FOREIGN KEY(karavan_uuid) REFERENCES karavan(uuid)
 );

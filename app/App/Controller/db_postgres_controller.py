@@ -190,8 +190,9 @@ class PostgreSQL:
 
     
     def addReqToDb(self, uuid, user_uuid, karavan_uuid, type, j_params, time, status):
-        query = "INSERT INTO request (uuid, user_uuid, karavan_uuid, type, params, time, status) VALUES (%s , %s , %s , %s , %s , %s, %s) RETURNING uuid"
-        args =(uuid, user_uuid, karavan_uuid, type, j_params, time, status)
+        client_service = config.configs['CLIENT_SERVICE_NAME']
+        query = "INSERT INTO request (uuid, user_uuid, karavan_uuid, type, params, time, status, client_service) VALUES (%s , %s , %s , %s , %s , %s, %s, %s) RETURNING uuid"
+        args =(uuid, user_uuid, karavan_uuid, type, j_params, time, status, client_service)
         req_uuid = self.execute_query(query, args).fetchall()[0][0]
         return req_uuid    
         
@@ -232,7 +233,9 @@ class PostgreSQL:
         return karavan_name
 
     def getUserLocations(self, user_uuid):
-        query = "SELECT * FROM request WHERE user_uuid = %s AND type='/send-my-location'"
+        query = """SELECT request.counter, request.uuid, request.params, request.time, users.fullname, users.username, users.uuid, request.client_service FROM request 
+                    INNER JOIN users ON request.user_uuid = users.uuid
+                    WHERE request.user_uuid = %s AND request.type='/send-my-location' ORDER BY request.counter DESC"""
         args = (user_uuid,)
         user_locations = self.execute_query(query, args).fetchall()
         return user_locations
@@ -246,7 +249,7 @@ class PostgreSQL:
 
 
     def getKaravanRequestInfo(self, karavan_uuid, type):
-        query = """SELECT users.fullname, users.username, request.uuid, request.time, request.params FROM users
+        query = """SELECT users.fullname, users.username, request.uuid, request.time, request.params, request.client_service FROM users
                     INNER JOIN request ON users.uuid=request.user_uuid 
                     WHERE request.karavan_uuid=%s AND users.is_user='true' AND
                     request.type=%s ORDER BY request.counter DESC"""

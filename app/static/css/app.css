@@ -114,10 +114,11 @@
 
 #user_all_locs_map {
   height: 540px; 
-  width: 500px;
+  width: 1000px;
   border: dashed;
   z-index: 0;
   border-radius: 20px;
+  
 
   .leaflet-popup-content{
     font-size: 9.5px;

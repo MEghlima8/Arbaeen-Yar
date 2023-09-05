@@ -44,38 +44,52 @@ app_methods.getSouvenirPhotos = function(page){
 }
 
 
-// retrieve all registered locations of the user
-app_methods.showUserAllLocations = function(user_uuid,page){
-    data = {'user_uuid': user_uuid, 'page_index':page}
-    console.log('data: ',data)
-    axios.post('/get-user-all-locations', data).then(response => {  
-        console.log('response: ',response)
+
+// retrieve karavan users locations
+app_methods.getRegisteredLocations = function(page){
+    if (this.selected_karavan_uuid == ''){
+        Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
+        return;
+    }
+    this.activeIndexPage = page;
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'time':this.selected_time}
+    axios.post('/get-registered-locations', data).then(response => {  
         if (response.data['status-code'] == 200) {
-            this.activeIndexPage = page;
+            this.registered_locations = response.data['result']
             this.pages = response.data['count_pages']
+            this.change_panel('manager', 'registered-locations')
+        }
+        else { Swal.fire({title:'ناموفق' ,text:'خطای نامشخص', icon:'info', confirmButtonText:'تایید'}) }
+    })
+}   
+
+
+
+
+// retrieve all registered locations of the user
+app_methods.showUserAllLocations = function(user_uuid){
+    data = {'user_uuid': user_uuid, 'time':this.selected_time}
+    axios.post('/get-user-all-locations', data).then(response => {  
+        if (response.data['status-code'] == 200) {
             this.change_panel('manager', 'user-all-locations')
-            
-            result = response.data['result']
-            for (var i=0 ; i < result.length;i++ ){
-                result[i].unshift(i+1)      
-            }
-            this.userAllLocations = result
+            this.userAllLocations = response.data['result']
 
             this.$nextTick(() => {
-                var map = L.map('user_all_locs_map').setView([result[0][6]['latitude'], result[0][6]['longitude']], 14);
+                if (this.map != null) { this.map.off(); this.map.remove(); }
+                this.map = L.map('user_all_locs_map').setView([this.userAllLocations[0][2]['latitude'], this.userAllLocations[0][2]['longitude']], 14);
                 
                 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                     maxZoom: 19,
-                }).addTo(map);
+                }).addTo(this.map);
 
-                for (var i=0 ; i < result.length;i++ ){
-                    var marker = L.marker([ result[i][6]['latitude'], result[i][6]['longitude'] ]).addTo(map);
-                    marker.bindPopup("</h3>شماره موقعیت : " + result[i][0] + '</h3>');
+                for (var i=0 ; i < this.userAllLocations.length;i++ ){
+                    var marker = L.marker([ this.userAllLocations[i][2]['latitude'], this.userAllLocations[i][2]['longitude'] ]).addTo(this.map);
+                    marker.bindPopup("<h6>نام: " + this.userAllLocations[i][4] + "</h6>" +
+                                        "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[i][3]['date'] + "</h6>" +
+                                        "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[i][3]['time'] + "</h6>");
                 }
             })
-
-            console.log(response.data)
         }
         // Without registered location
         else{
@@ -102,25 +116,6 @@ app_methods.showLocation = function(longitude,latitude){
         })
     }
 }
-
-
-// retrieve karavan users locations
-app_methods.getRegisteredLocations = function(page){
-    if (this.selected_karavan_uuid == ''){
-        Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
-        return;
-    }
-    this.activeIndexPage = page;
-    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page}
-    axios.post('/get-registered-locations', data).then(response => {  
-        if (response.data['status-code'] == 200) {
-            this.registered_locations = response.data['result']
-            this.pages = response.data['count_pages']
-            this.change_panel('manager', 'registered-locations')
-        }
-        else { Swal.fire({title:'ناموفق' ,text:'خطای نامشخص', icon:'info', confirmButtonText:'تایید'}) }
-    })
-}   
 
 
 app_methods.getKaravanUsersInfo = function(page){
@@ -323,7 +318,7 @@ Vue.createApp({
         selected_time: 'all',
         selected_event: 'all',
 
-        map: '',
+        map: null,
         show_location: '',
 
         souvenir_photos: '',

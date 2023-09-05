@@ -1,6 +1,6 @@
 # Arbaeein Yar
 Arbaeen Yar helps people to have an easier trip to Karbala
-This is version 0.3.0
+This is version 0.3.1
 
 
 ## Configuration
@@ -10,10 +10,12 @@ Open the ".env" file and find the variables and change its values to the desire 
 
 1. **SYSTEM_NAME**
 
-2. **DOMAIN_ADDRESS**
+2. **CLIENT_SERVICE_NAME**
 
-3. **BOT_TOKEN**
+3. **DOMAIN_ADDRESS**
 
-4. **BASE_URL**
+4. **BOT_TOKEN**
 
-5. **BASE_FILE_URL**
+5. **BASE_URL**
+
+6. **BASE_FILE_URL**

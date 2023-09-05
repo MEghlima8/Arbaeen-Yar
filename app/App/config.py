@@ -4,6 +4,7 @@ load_dotenv()
 
 configs = {
     'SYSTEM_NAME' : os.getenv('SYSTEM_NAME') , 
+    'CLIENT_SERVICE_NAME' : os.getenv('CLIENT_SERVICE_NAME') ,
     'DOMAIN_ADDRESS' : os.getenv('DOMAIN_ADDRESS') ,
 
     'HOST' : os.getenv('HOST') , 
