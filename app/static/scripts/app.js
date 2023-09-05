@@ -25,10 +25,17 @@ app_methods.getSouvenirPhotos = function(page){
         return;
     }
     this.activeIndexPage = page;
-    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page}
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'time':this.selected_time, 'event':this.selected_event}
     axios.post('/get-souvenir-photos', data).then(response => {  
         if (response.data['status-code'] == 200) {
             this.souvenir_photos = response.data['result']
+            for (var i=0 ; i < this.souvenir_photos.length;i++ ){
+                if (this.souvenir_photos[i][4]['event'] == 'arbaeen'){this.souvenir_photos[i][4]['event']='اربعین' }
+                else if (this.souvenir_photos[i][4]['event'] == 'moharram'){this.souvenir_photos[i][4]['event']='محرم' }
+                else if (this.souvenir_photos[i][4]['event'] == 'fetr'){this.souvenir_photos[i][4]['event']='فطر' }
+                else if (this.souvenir_photos[i][4]['event'] == 'ghadir'){this.souvenir_photos[i][4]['event']='غدیر' }
+                else if (this.souvenir_photos[i][4]['event'] == 'other'){this.souvenir_photos[i][4]['event']='سایر' }
+            }
             this.pages = response.data['count_pages']
             this.change_panel('manager', 'souvenir-photos')
         }
@@ -95,8 +102,6 @@ app_methods.showLocation = function(longitude,latitude){
         })
     }
 }
-
-
 
 
 // retrieve karavan users locations
@@ -313,6 +318,10 @@ Vue.createApp({
 
         // selected karavan name
         selected_karavan_uuid: '',
+
+        // selected time to filter by time for all panels
+        selected_time: 'all',
+        selected_event: 'all',
 
         map: '',
         show_location: '',

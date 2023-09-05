@@ -286,7 +286,7 @@
                         <!-- Task Info -->
                         <div class="col-xs-12 col-sm-12">
 
-                            <div class="header">
+                            <div class="header col-md-7">
                                 <label for="category">کاروان مورد نظر را انتخاب کنید</label>
                                 <div class="select">
                                     <select v-model="selected_karavan_uuid" @change="changeSelectedKaravan">
@@ -296,10 +296,39 @@
                                 </div>
                             </div>
 
-                            <br/>
+                            <div class="col-md-2">
+                                <label for="category">فیلتر زمان</label>
+                                <div class="select" style="width:150px">
+                                    <select v-model="selected_time" @change="getSouvenirPhotos(1)">
+                                        <option value="all">همه</option>
+                                        <option value="today">امروز</option>
+                                        <option value="week">این هفته</option>
+                                        <option value="month">این ماه</option>
+                                        <option value="year">امسال</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="category">فیلتر رویداد</label>
+                                <div class="select" style="width:150px">
+                                    <select v-model="selected_event" @change="getSouvenirPhotos(1)">
+                                        <option value="all">همه</option>
+                                        <option value="arbaeen">اربعین</option>
+                                        <option value="moharram">محرم</option>
+                                        <option value="fetr">فطر</option>
+                                        <option value="ghadir">غدیر</option>
+                                        <option value="other">سایر رویدادها</option>
+                                    </select>
+                                </div>
+                            </div>
+
+
+                            <div style="height:80px;"></div>
                             <div v-if="show_panel == 'true'" class="card">
                                 <div class="body panels">
-                                    <h3>عکس های یادگاری<h3>
+                                    <h3 class="col-md-5">عکس های یادگاری<h3>
+                                    
                                     <div class="table-responsive">
                                         <table class="table table-hover dashboard-task-infos">
                                             <thead>
@@ -309,6 +338,7 @@
                                                     <th>شناسه</th>
                                                     <th>تاریخ</th>
                                                     <th>زمان</th>
+                                                    <th>رویداد</th>
                                                     <th>عکس دریافتی</th>
                                                 </tr>
                                             </thead>
@@ -319,6 +349,7 @@
                                                     <td>${ photo[2] }$</td>
                                                     <td>${ photo[3]['date'] }$</td>
                                                     <td>${ photo[3]['time'] }$</td>
+                                                    <td>${ photo[4]['event'] }$</td>
                                                     <td> <a :href="photo[4]['path']" target="_blank">نمایش</a> </td>
                                                 </tr>
                                             </tbody>
@@ -367,7 +398,6 @@
                                             <thead>
                                                 <tr>
                                                     <th>نام</th>
-                                                    <th>نام کاربری</th>
                                                     <th>شناسه</th>
                                                     <th>تاریخ</th>
                                                     <th>زمان</th>
@@ -379,7 +409,6 @@
                                             <tbody>
                                                 <tr v-for="location in registered_locations">
                                                     <td>${ location[0] }$</td>
-                                                    <td>${ location[1] }$</td>
                                                     <td>${ location[2] }$</td>
                                                     <td>${ location[3]['date'] }$</td>
                                                     <td>${ location[3]['time'] }$</td>

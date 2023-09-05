@@ -79,7 +79,9 @@ def get_karavan_users_info():
 def get_souvenir_photos():
     j_body_data = request.get_json()
     res = db.db.getKaravanRequestInfo(j_body_data['karavan_uuid'], '/souvenir-photo')
-
+    res = web_process.handleResultByTime(res,j_body_data['time'])
+    res = web_process.handleResultByEvent(res,j_body_data['event'])
+    
     page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
     result = {"status-code":200 , "result":page_items,
               "count_pages":count_all_pages, "active_page":j_body_data["karavan_uuid"]

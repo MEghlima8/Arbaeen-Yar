@@ -1,9 +1,4 @@
 services:
-    rabbitmq:
-        image: rabbitmq:3-management
-        container_name: karavan_rabbitmq
-        networks:
-          - network1
     flask:
         build:
           context: .
@@ -14,9 +9,6 @@ services:
           - '8080:5000'
         networks:
           - network1
-        depends_on:
-          - rabbitmq
-          - db
         volumes:
           - /var/docker-data/karavan-management/static/users:/app/static/users
     db:

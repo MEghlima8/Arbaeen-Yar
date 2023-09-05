@@ -1,4 +1,4 @@
-from App.Controller.keyboard import reply_markup_cancel
+from App.Controller.keyboard import reply_markup_cancel, reply_markup_photo_event
 from App.Controller import db_postgres_controller as db
 import uuid
 import json
@@ -8,6 +8,7 @@ from App import config
 import os
 import requests
 
+events = {'moharram':'محرم', 'arbaeen':'اربعین', 'ghadir':'غدیر', 'fetr':'فطر', 'other':'سایر'}
 
 # Save media in local storage
 def save_media(path, mime_type, user_id):
@@ -91,11 +92,24 @@ async def get_user_location(update, context, _text, _STEP, chat_id):
     
 # Record a souvenir photo - get photo
 async def record_souvenir_photo(_update, context, _text, _STEP, chat_id):
-    db.db.changeUserSTEP('handle-record-souvenir-photo', chat_id)
-    await context.bot.send_message(chat_id=chat_id, text='تصویر مورد نظر را ارسال کنید :')
+    db.db.changeUserSTEP('handle-photo-event', chat_id)
+    await context.bot.send_message(chat_id=chat_id, text='رویداد مورد نظر خود را انتخاب کنید :',reply_markup=reply_markup_photo_event)
+
+    
+async def handle_photo_event(_update, context, text, _STEP, chat_id):
+    if text in events.keys():
+        db.db.changeFirstTextMsg(text,chat_id) # Store event name in database
+        db.db.changeUserSTEP('handle-record-souvenir-photo', chat_id)
+        await context.bot.send_message(chat_id=chat_id, text='تصویر مورد نظر را ارسال کنید :')
+    else:
+        await context.bot.send_message(chat_id=chat_id, text='لطفا یک رویداد را انتخاب کنید')
+    
+    
 
 # Record a souvenir photo - save photo
 async def handle_record_souvenir_photo(update, context, _text, _STEP, chat_id):
+    event_name = db.db.getFirstTextMsg(chat_id)
+    
     # Check the user sent image or not
     mime_type = update.message.document.mime_type.split('/')  # 'image/png'
     if mime_type[0] != 'image':
@@ -107,7 +121,7 @@ async def handle_record_souvenir_photo(update, context, _text, _STEP, chat_id):
     
     # save image in local
     path = save_media(file.file_path, mime_type[1], chat_id)
-    params = json.dumps({"path" : path })
+    params = json.dumps({"path":path, "event":event_name })
     
     user_uuid = db.db.getUserUUIDFromChatId(chat_id)
     karavan_uuid = db.db.getKaravanUUIDFromUser(user_uuid)

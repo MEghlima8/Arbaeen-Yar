@@ -51,12 +51,14 @@ commands = [
     
     # COMMANDS
     [r"/start", r".+", start], # text - step - callback
-    # [r"/help", r".+", help],
+    
     [r"/cancel", r".+", cancel],
     
     [r"/send-my-location", r".+", bot_process.send_my_location],
     
     [r"/record-souvenir-photo", r".+", bot_process.record_souvenir_photo],
+    
+    [r".", r"handle-photo-event", bot_process.handle_photo_event],
     
     [r".+", r"get-user-username-to-signin", bot_process.get_user_username_to_signin],
     [r".+", r"get-user-password-to-signin", bot_process.get_user_password_to_signin],
@@ -75,10 +77,6 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = update.callback_query.data
         STEP = db.db.getUserSTEP(chat_id)[0]
         
-        # The user must complete the route or cancel. User can't go to another route while user is in a route
-        if STEP != 'home' and (text != '/cancel' and text !='/help' ):
-            await context.bot.send_message(chat_id=chat_id, text='لطفا درخواست خود را تکمیل یا بر روی بازگشت به صفحه اصلی ضربه بزنید.')
-            return
     except:
         try:
             chat_id = update.effective_chat.id

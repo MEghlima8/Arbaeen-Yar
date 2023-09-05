@@ -13,3 +13,18 @@ keyboard_start_user = [
 ]
 reply_markup_start_user = InlineKeyboardMarkup(keyboard_start_user)
 
+
+keyboard_photo_event = [
+    [
+        InlineKeyboardButton("محرم", callback_data="moharram"),
+        InlineKeyboardButton("اربعین", callback_data="arbaeen")
+    ],
+    [
+        InlineKeyboardButton("عید غدیر", callback_data="ghadir"),
+        InlineKeyboardButton("عید فطر", callback_data="fetr")
+    ],
+    [InlineKeyboardButton("سایر", callback_data="other")]
+
+]
+reply_markup_photo_event = InlineKeyboardMarkup(keyboard_photo_event)
+
