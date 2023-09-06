@@ -9,6 +9,8 @@ services:
           - '8080:5000'
         networks:
           - network1
+        depends_on:
+          - db
         volumes:
           - /var/docker-data/karavan-management/static/users:/app/static/users
     db:
@@ -29,7 +31,6 @@ services:
 networks:
   network1:
     name: karavan
-    external: true
 volumes:
   db:
     driver: local

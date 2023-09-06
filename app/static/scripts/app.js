@@ -8,7 +8,8 @@ app_methods.change_panel = function(panel,manager_panel){
     this.show_location = 'false'
     this.panel = panel;
     this.manager_panel = manager_panel;
-    this.selected_time = 'all';
+    if (manager_panel != 'user-all-locations'){ this.selected_time = 'all' };
+    
 }
 
 app_methods.isActivePanel = function(panel){
@@ -120,7 +121,6 @@ app_methods.showUserAllLocations = function(user_uuid){
     data = {'user_uuid': user_uuid, 'time':this.selected_time}
 
     axios.post('/get-user-all-locations', data).then(response => {  
-        console.log('response.data: ',response.data)
 
         if (response.data['status-code'] == 200) {
             this.change_panel('manager', 'user-all-locations')
@@ -145,14 +145,15 @@ app_methods.showUserAllLocations = function(user_uuid){
         }
         // Without registered location
         else{
-            this.map.off();
-            this.map.remove();
-            this.map = L.map('user_all_locs_map').setView([this.userAllLocations[0][2]['latitude'], this.userAllLocations[0][2]['longitude']], 14);
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                maxZoom: 19,
-            }).addTo(this.map);
-
+            if (this.map != null){
+                this.map.off();
+                this.map.remove();
+                this.map = L.map('user_all_locs_map').setView([this.userAllLocations[0][2]['latitude'], this.userAllLocations[0][2]['longitude']], 14);
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 19,
+                }).addTo(this.map);
+            }
             Swal.fire({title:'بدون موقعیت مکانی' ,text:'کاربر موقعیت مکانی ثبت شده ای ندارد', icon:'info', confirmButtonText:'تایید'})
         }
     })    

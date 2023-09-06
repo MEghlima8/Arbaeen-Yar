@@ -1,3 +1,8 @@
+DROP TABLE IF EXISTS request;
+DROP TABLE IF EXISTS karavan_users;
+DROP TABLE IF EXISTS karavan;
+DROP TABLE IF EXISTS users;
+
 CREATE TABLE users (
     counter SERIAL ,
     uuid VARCHAR(255) PRIMARY KEY ,
