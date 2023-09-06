@@ -1,13 +1,14 @@
 var app_methods = {};
 
 app_methods.change_panel = function(panel,manager_panel){
-    // this.search_bar_val = '',
+    this.search_bar_val = '',
     this.username = '';
     this.password = '';
     this.fullname = '';
     this.show_location = 'false'
     this.panel = panel;
     this.manager_panel = manager_panel;
+    this.selected_time = 'all';
 }
 
 app_methods.isActivePanel = function(panel){
@@ -19,16 +20,37 @@ app_methods.isActivePage = function(index){
 }
 
 
+// Search with fullname or username
+app_methods.onClick_searchBarAdvs = function(){
+    if (this.search_bar_val != null){
+        this.pages = null;
+    
+        if (this.manager_panel == 'manager-dashboard') {
+            this.getKaravanUsersInfo(1)
+        }
+        else if (this.manager_panel == 'souvenir-photos'){
+            this.getSouvenirPhotos(1);
+        }
+        else if (this.manager_panel == 'registered-locations'){
+            this.getRegisteredLocations(1)
+        }
+        this.search_bar_val = null;
+    }
+}
+
+
 app_methods.getSouvenirPhotos = function(page){
     if (this.selected_karavan_uuid == ''){
         Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
         return;
     }
     this.activeIndexPage = page;
-    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'time':this.selected_time, 'event':this.selected_event}
-    axios.post('/get-souvenir-photos', data).then(response => {  
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'time':this.selected_time, 'event':this.selected_event, 'search_value':this.search_bar_val}
+    axios.post('/get-souvenir-photos', data).then(response => {
+
         if (response.data['status-code'] == 200) {
             this.souvenir_photos = response.data['result']
+
             for (var i=0 ; i < this.souvenir_photos.length;i++ ){
                 if (this.souvenir_photos[i][4]['event'] == 'arbaeen'){this.souvenir_photos[i][4]['event']='اربعین' }
                 else if (this.souvenir_photos[i][4]['event'] == 'moharram'){this.souvenir_photos[i][4]['event']='محرم' }
@@ -36,6 +58,7 @@ app_methods.getSouvenirPhotos = function(page){
                 else if (this.souvenir_photos[i][4]['event'] == 'ghadir'){this.souvenir_photos[i][4]['event']='غدیر' }
                 else if (this.souvenir_photos[i][4]['event'] == 'other'){this.souvenir_photos[i][4]['event']='سایر' }
             }
+
             this.pages = response.data['count_pages']
             this.change_panel('manager', 'souvenir-photos')
         }
@@ -52,7 +75,7 @@ app_methods.getRegisteredLocations = function(page){
         return;
     }
     this.activeIndexPage = page;
-    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'time':this.selected_time}
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'time':this.selected_time, 'search_value':this.search_bar_val}
     axios.post('/get-registered-locations', data).then(response => {  
         if (response.data['status-code'] == 200) {
             this.registered_locations = response.data['result']
@@ -65,11 +88,40 @@ app_methods.getRegisteredLocations = function(page){
 
 
 
+app_methods.getKaravanUsersInfo = function(page){
+    if (this.selected_karavan_uuid == ''){return;}
+    this.activeIndexPage = page;
+    
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'search_value':this.search_bar_val}
+    axios.post('/get-karavan-users-info', data).then(response => {
+        
+        if (response.data['status-code'] == 200) {
+            this.users_info = response.data['result']
+            this.pages = response.data['count_pages']
+            for (let i=0; i < this.users_info.length; i++){                
+                if (this.users_info[i][5] == 'true'){
+                    this.users_info[i][5] = 'فعال'
+                }
+                else {
+                    this.users_info[i][5] = 'غیر فعال'
+                }}
+            this.change_panel('manager', 'manager-dashboard')
+        }
+        else {
+            Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'})
+        }
+    })
+}
+
+
 
 // retrieve all registered locations of the user
 app_methods.showUserAllLocations = function(user_uuid){
     data = {'user_uuid': user_uuid, 'time':this.selected_time}
+
     axios.post('/get-user-all-locations', data).then(response => {  
+        console.log('response.data: ',response.data)
+
         if (response.data['status-code'] == 200) {
             this.change_panel('manager', 'user-all-locations')
             this.userAllLocations = response.data['result']
@@ -84,8 +136,8 @@ app_methods.showUserAllLocations = function(user_uuid){
                 }).addTo(this.map);
 
                 for (var i=0 ; i < this.userAllLocations.length;i++ ){
-                    var marker = L.marker([ this.userAllLocations[i][2]['latitude'], this.userAllLocations[i][2]['longitude'] ]).addTo(this.map);
-                    marker.bindPopup("<h6>نام: " + this.userAllLocations[i][4] + "</h6>" +
+                    this.marker = L.marker([ this.userAllLocations[i][2]['latitude'], this.userAllLocations[i][2]['longitude'] ]).addTo(this.map);
+                    this.marker.bindPopup("<h6>نام: " + this.userAllLocations[i][4] + "</h6>" +
                                         "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[i][3]['date'] + "</h6>" +
                                         "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[i][3]['time'] + "</h6>");
                 }
@@ -93,6 +145,14 @@ app_methods.showUserAllLocations = function(user_uuid){
         }
         // Without registered location
         else{
+            this.map.off();
+            this.map.remove();
+            this.map = L.map('user_all_locs_map').setView([this.userAllLocations[0][2]['latitude'], this.userAllLocations[0][2]['longitude']], 14);
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19,
+            }).addTo(this.map);
+
             Swal.fire({title:'بدون موقعیت مکانی' ,text:'کاربر موقعیت مکانی ثبت شده ای ندارد', icon:'info', confirmButtonText:'تایید'})
         }
     })    
@@ -115,30 +175,6 @@ app_methods.showLocation = function(longitude,latitude){
             L.marker([latitude, longitude]).addTo(map);
         })
     }
-}
-
-
-app_methods.getKaravanUsersInfo = function(page){
-    this.activeIndexPage = page;
-    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page}
-
-    axios.post('/get-karavan-users-info', data).then(response => {
-        
-        if (response.data['status-code'] == 200) {
-            this.users_info = response.data['result']
-            this.pages = response.data['count_pages']
-            for (let i=0; i < this.users_info.length; i++){                
-                if (this.users_info[i][5] == 'true'){
-                    this.users_info[i][5] = 'فعال'
-                }
-                else {
-                    this.users_info[i][5] = 'غیر فعال'
-                }}                    
-        }
-        else {
-            Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'})
-        }
-    })
 }
 
 

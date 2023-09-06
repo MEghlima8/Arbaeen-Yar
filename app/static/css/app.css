@@ -1,3 +1,31 @@
+.topnav1 .search-container1 {
+  float: right;
+}
+
+.topnav1 input[type=text] {
+  padding: 6px;
+  margin-top: 8px;
+  font-size: 17px;
+  border: none;
+  width: 350px;
+}
+
+.topnav1 .search-container1 button {
+  float: right;
+  padding: 6px 10px;
+  margin-top: 8px;
+  margin-right: 16px;
+  background: #ddd;
+  font-size: 17px;
+  border: none;
+  cursor: pointer;
+}
+
+.topnav1 .search-container1 button:hover {
+  background: #ccc;
+}
+
+
 .panels {
   height: 600px !important;
 }

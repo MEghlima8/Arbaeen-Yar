@@ -146,13 +146,16 @@
             
             <!-- Top Bar -->
             <nav class="navbar">
-                <div class="container-fluid">
-                    <div class="navbar-header">
-                        <a href="javascript:void(0);" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false"></a>
-                        <a href="javascript:void(0);" class="bars"></a>
-                        <a class="navbar-brand" href="#"></a>
+                <div v-if="selected_karavan_uuid != '' && manager_panel != 'user-all-locations'" class="topnav1">
+                    <div class="search-container1 ">
+                      <form>
+                        <input v-model="search_bar_val" type="text" placeholder="جستجو با نام یا نام کاربری..." style="font: 1.25rem/3">
+                        <button @click.prevent="onClick_searchBarAdvs()" type="submit">
+                            <span class="material-symbols-outlined">search</span>
+                        </i></button>
+                      </form>
                     </div>
-                </div>
+                </div>                  
             </nav>
             <!-- #Top Bar -->
 
@@ -164,7 +167,7 @@
                         <ul class="list">
                             <li class="header">ناوبری اصلی</li>
                             <li>
-                                <a :class="{ activePanel: isActivePanel('manager-dashboard') }"  @click.prevent="change_panel('manager', 'manager-dashboard')" style="background-color:darkcyan;" href="#">
+                                <a :class="{ activePanel: isActivePanel('manager-dashboard') }"  @click.prevent="getKaravanUsersInfo(1)" style="background-color:darkcyan;" href="#">
                                     <i style="color: darkgray" class="material-icons">home</i>
                                     <span style="color:aliceblue;">صفحه اصلی</span>
                                 </a>
@@ -183,15 +186,6 @@
                                     <span style="color:aliceblue;">افزودن عضو به کاروان</span>
                                 </a>
                             </li>
-                            <!--
-                            <div style="padding-top:3px"></div>
-                            <li>
-                                <a style="background-color:darkcyan;" href="javascript:void(0);" class="toggled">
-                                    <i style="color: darkgray" class="material-icons">event_note</i>
-                                    <span style="color:aliceblue;">دلنوشته ها</span>
-                                </a>
-                            </li>
-                            -->
                             <div style="padding-top:3px"></div>
                             <li>
                                 <a :class="{ activePanel: isActivePanel('souvenir-photos') }" @click.prevent="getSouvenirPhotos(1)" style="background-color:darkcyan;" href="javascript:void(0);" class="toggled">
@@ -429,7 +423,7 @@
                                                     <th>زمان</th>
                                                     <th>طول جغرافیایی</th>
                                                     <th>عرض جغرافیایی</th>
-                                                    <th>رویداد</th>
+                                                    <th>نام سرویس</th>
                                                     <th>نمایش روی نقشه</th>
                                                 </tr>
                                             </thead>
@@ -539,7 +533,7 @@
                     </div>
                 </div>
             </section>
-            <!-- # Manager show user locations -->
+            <!-- # Manager show user all locations -->
 
 
 

@@ -1,5 +1,6 @@
 from App import config
 import psycopg2
+import re
 
 database = config.configs['DB_NAME']
 host = config.configs['DB_HOST']
@@ -217,15 +218,6 @@ class PostgreSQL:
         return karavan_name
         
         
-
-    def getAllKaravanUsersInfo(self, karavan_uuid):
-        query = """SELECT users.uuid, users.chat_id, users.fullname, users.username, users.password, users.active FROM users
-                    INNER JOIN karavan_users ON users.uuid=karavan_users.user_uuid 
-                    WHERE karavan_users.karavan_uuid=%s AND users.is_user='true' ORDER BY users.counter ASC"""
-        args =(karavan_uuid,)
-        info = self.execute_query(query,args).fetchall()
-        return info
-    
     def getKaravanName(self, karavan_uuid):
         query = "SELECT name FROM karavan WHERE uuid = %s"
         args = (karavan_uuid,)
@@ -248,12 +240,57 @@ class PostgreSQL:
         return res
 
 
-    def getKaravanRequestInfo(self, karavan_uuid, type):
-        query = """SELECT users.fullname, users.username, request.uuid, request.time, request.params, request.client_service FROM users
+    def getAllKaravanUsersInfo(self, karavan_uuid, search_value):
+        if search_value == '' or search_value == None :
+            query = """SELECT users.uuid, users.chat_id, users.fullname, users.username, users.password, users.active FROM users
+                    INNER JOIN karavan_users ON users.uuid=karavan_users.user_uuid 
+                    WHERE karavan_users.karavan_uuid=%s AND users.is_user='true' ORDER BY users.counter ASC"""
+            args =(karavan_uuid,)
+            
+        # Search in fullname column
+        elif re.match(r'^[\u0600-\u06FF\s]+$', search_value):
+            query = """SELECT users.uuid, users.chat_id, users.fullname, users.username, users.password, users.active FROM users
+                    INNER JOIN karavan_users ON users.uuid=karavan_users.user_uuid 
+                    WHERE karavan_users.karavan_uuid=%s AND users.is_user='true' AND 
+                    users.fullname LIKE %s ORDER BY users.counter ASC"""
+            args =(karavan_uuid, '%'+search_value+'%')
+
+        # Search in username column
+        else:
+            query = """SELECT users.uuid, users.chat_id, users.fullname, users.username, users.password, users.active FROM users
+                    INNER JOIN karavan_users ON users.uuid=karavan_users.user_uuid 
+                    WHERE karavan_users.karavan_uuid=%s AND users.is_user='true' AND 
+                    users.username LIKE %s ORDER BY users.counter ASC"""
+            args =(karavan_uuid, '%'+search_value+'%')
+
+        info = self.execute_query(query,args).fetchall()
+        return info
+    
+
+    def getKaravanRequestInfo(self, karavan_uuid, type, search_value):
+        if search_value == '' or search_value is None :
+            query = """SELECT users.fullname, users.username, request.uuid, request.time, request.params, request.client_service FROM users
                     INNER JOIN request ON users.uuid=request.user_uuid 
                     WHERE request.karavan_uuid=%s AND users.is_user='true' AND
                     request.type=%s ORDER BY request.counter DESC"""
-        args = (karavan_uuid, type)
+            args = (karavan_uuid, type)
+            
+        # Search in fullname column
+        elif re.match(r'^[\u0600-\u06FF\s]+$', search_value):
+            query = """SELECT users.fullname, users.username, request.uuid, request.time, request.params, request.client_service FROM users
+                    INNER JOIN request ON users.uuid=request.user_uuid 
+                    WHERE request.karavan_uuid=%s AND users.is_user='true' AND
+                    request.type=%s AND users.fullname LIKE %s ORDER BY request.counter DESC"""
+            args = (karavan_uuid, type, '%'+search_value+'%')
+        
+        # Search in username column
+        else:
+            query = """SELECT users.fullname, users.username, request.uuid, request.time, request.params, request.client_service FROM users
+                    INNER JOIN request ON users.uuid=request.user_uuid 
+                    WHERE request.karavan_uuid=%s AND users.is_user='true' AND
+                    request.type=%s AND users.username LIKE %s ORDER BY request.counter DESC"""
+            args = (karavan_uuid, type, '%'+search_value+'%')
+            
         res = self.execute_query(query,args).fetchall()
         return res
 

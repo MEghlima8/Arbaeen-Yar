@@ -36,8 +36,8 @@ class Manager:
         return 'true'
 
 
-
 class User:
+    
     def __init__(self, fullname=None, username=None, password=None):
         self.fullname = fullname
         self.username = username

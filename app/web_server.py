@@ -66,7 +66,7 @@ def get_karavans_name():
 @app.route('/get-karavan-users-info', methods=['POST'])
 def get_karavan_users_info():
     j_body_data = request.get_json()
-    res = db.db.getAllKaravanUsersInfo(j_body_data['karavan_uuid'])
+    res = db.db.getAllKaravanUsersInfo(j_body_data['karavan_uuid'], j_body_data['search_value'])
 
     page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
     result = {"status-code":200 , "result":page_items,
@@ -78,7 +78,8 @@ def get_karavan_users_info():
 @app.route('/get-souvenir-photos', methods=['POST'])
 def get_souvenir_photos():
     j_body_data = request.get_json()
-    res = db.db.getKaravanRequestInfo(j_body_data['karavan_uuid'], '/souvenir-photo')
+    
+    res = db.db.getKaravanRequestInfo(j_body_data['karavan_uuid'], '/souvenir-photo', j_body_data['search_value'])
     res = web_process.handleResultByTime(res,j_body_data['time'])
     res = web_process.handleResultByEvent(res,j_body_data['event'])
     
@@ -92,7 +93,7 @@ def get_souvenir_photos():
 @app.route('/get-registered-locations', methods=['POST'])
 def get_registered_locations():
     j_body_data = request.get_json()
-    res = db.db.getKaravanRequestInfo(j_body_data['karavan_uuid'], '/send-my-location')
+    res = db.db.getKaravanRequestInfo(j_body_data['karavan_uuid'], '/send-my-location', j_body_data['search_value'])
     res = web_process.handleResultByTime(res,j_body_data['time'])
 
     page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
@@ -106,16 +107,13 @@ def get_registered_locations():
 def get_user_all_locations():
     j_body_data = request.get_json()
     res = db.db.getUserLocations(j_body_data['user_uuid'])
-
+    res = web_process.handleResultByTime(res,j_body_data['time'])
     if res == []:
         result = {"status-code":204 , "result":'Without registered location'}
     else:
-        res = web_process.handleResultByTime(res,j_body_data['time'])
         result = {"status-code":200 , "result":res}
 
     return result
-
-
 
 
 # Signin user
