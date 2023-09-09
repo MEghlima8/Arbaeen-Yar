@@ -3049,11 +3049,11 @@ section.content {
     .card .body .col-md-11,
     .card .body .col-lg-11 {
       margin-bottom: 20px; }
-    .card .body .col-xs-12,
+    /* .card .body .col-xs-12,
     .card .body .col-sm-12,
     .card .body .col-md-12,
     .card .body .col-lg-12 {
-      margin-bottom: 20px; }
+      margin-bottom: 20px; } */
 
 /* Infobox ===================================== */
 .info-box {

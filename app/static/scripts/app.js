@@ -1,6 +1,6 @@
 var app_methods = {};
 
-app_methods.change_panel = function(panel,manager_panel){
+app_methods.change_panel = function(panel,manager_panel,change_section=false){
     this.search_bar_val = '',
     this.username = '';
     this.password = '';
@@ -8,7 +8,9 @@ app_methods.change_panel = function(panel,manager_panel){
     this.show_location = 'false'
     this.panel = panel;
     this.manager_panel = manager_panel;
-    if (manager_panel != 'user-all-locations'){ this.selected_time = 'all' };
+
+    // if(manager_panel == 'manager-dashboard')
+    if (manager_panel != 'registered-locations'){ this.show_all_users_locations_on_map = false };
     
 }
 
@@ -68,11 +70,25 @@ app_methods.getSouvenirPhotos = function(page){
 }
 
 
+app_methods.changePanelForAllUsersLocations = function(){
+    this.show_all_users_locations_on_map = !this.show_all_users_locations_on_map;
+
+    if (this.show_all_users_locations_on_map){
+        this.showAllUsersLocationsOnMap();
+    }
+    else{
+        this.getRegisteredLocations(1);
+    }
+}
 
 // retrieve karavan users locations
 app_methods.getRegisteredLocations = function(page){
     if (this.selected_karavan_uuid == ''){
         Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
+        return;
+    }
+    if (this.show_all_users_locations_on_map == true){
+        this.showAllUsersLocationsOnMap();
         return;
     }
     this.activeIndexPage = page;
@@ -81,12 +97,14 @@ app_methods.getRegisteredLocations = function(page){
         if (response.data['status-code'] == 200) {
             this.registered_locations = response.data['result']
             this.pages = response.data['count_pages']
-            this.change_panel('manager', 'registered-locations')
         }
-        else { Swal.fire({title:'ناموفق' ,text:'خطای نامشخص', icon:'info', confirmButtonText:'تایید'}) }
+        else {
+            this.registered_locations = null;
+            this.pages = null;
+        }
+        this.change_panel('manager', 'registered-locations')
     })
 }   
-
 
 
 app_methods.getKaravanUsersInfo = function(page){
@@ -106,8 +124,8 @@ app_methods.getKaravanUsersInfo = function(page){
                 else {
                     this.users_info[i][5] = 'غیر فعال'
                 }}
-            this.change_panel('manager', 'manager-dashboard')
-        }
+                this.change_panel('manager', 'manager-dashboard')
+            }
         else {
             Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'})
         }
@@ -115,31 +133,51 @@ app_methods.getKaravanUsersInfo = function(page){
 }
 
 
+app_methods.showAllUsersLocationsOnMap = function(){
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':'all', 'time':this.selected_time, 'search_value':this.search_bar_val}
+    axios.post('/get-registered-locations', data).then(response => {
 
-// retrieve all registered locations of the user
-app_methods.showUserAllLocations = function(user_uuid){
-    data = {'user_uuid': user_uuid, 'time':this.selected_time}
-
-    axios.post('/get-user-all-locations', data).then(response => {  
+        var remained_icons = [...this.map_icons_name];
+        var users_icons = {};
 
         if (response.data['status-code'] == 200) {
-            this.change_panel('manager', 'user-all-locations')
-            this.userAllLocations = response.data['result']
+            this.registered_locations = response.data['result']
 
             this.$nextTick(() => {
-                if (this.map != null) { this.map.off(); this.map.remove(); }
-                this.map = L.map('user_all_locs_map').setView([this.userAllLocations[0][2]['latitude'], this.userAllLocations[0][2]['longitude']], 14);
+
+                if (this.map != null) {
+                    this.map.off(); this.map.remove();
+                };
+
+                this.map = L.map('all_users_locs_on_map').setView([this.registered_locations[0][4]['latitude'], this.registered_locations[0][4]['longitude']], 13);
                 
                 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                     maxZoom: 19,
                 }).addTo(this.map);
 
-                for (var i=0 ; i < this.userAllLocations.length;i++ ){
-                    this.marker = L.marker([ this.userAllLocations[i][2]['latitude'], this.userAllLocations[i][2]['longitude'] ]).addTo(this.map);
-                    this.marker.bindPopup("<h6>نام: " + this.userAllLocations[i][4] + "</h6>" +
-                                        "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[i][3]['date'] + "</h6>" +
-                                        "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[i][3]['time'] + "</h6>");
+                
+                for (var i=0 ; i < this.registered_locations.length;i++ ){
+                    if (remained_icons.length == 0) { remained_icons = [...this.map_icons_name] }
+
+                    if(this.registered_locations[i][1] in users_icons){
+                        var userIcon = L.icon({iconUrl: './static/css/images/' + users_icons[this.registered_locations[i][1]],shadowUrl: '/static/css/images/marker-shadow.png',iconSize:[38, 40],shadowSize:[38, 40],});
+                        this.marker = L.marker([ this.registered_locations[i][4]['latitude'], this.registered_locations[i][4]['longitude']],
+                        {icon: userIcon}).addTo(this.map);
+                    }
+                    else{
+                        users_icons[this.registered_locations[i][1]] = remained_icons.pop();
+                        var userIcon = L.icon({iconUrl: './static/css/images/' + users_icons[this.registered_locations[i][1]],shadowUrl: '/static/css/images/marker-shadow.png',iconSize:[38, 40],shadowSize:[38, 40],});
+                        
+                        this.marker = L.marker([ this.registered_locations[i][4]['latitude'], this.registered_locations[i][4]['longitude']],
+                        {icon: userIcon}).addTo(this.map);
+
+                    }
+                    this.marker.bindPopup(
+                        "<h6>نام: " + this.registered_locations[i][0] + "</h6>" +
+                    "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.registered_locations[i][3]['date'] + "</h6>" +
+                    "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.registered_locations[i][3]['time'] + "</h6>"
+                    );
                 }
             })
         }
@@ -148,16 +186,81 @@ app_methods.showUserAllLocations = function(user_uuid){
             if (this.map != null){
                 this.map.off();
                 this.map.remove();
+                this.map = L.map('all_users_locs_on_map').setView([27.1963, 56.2884], 14);
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19,
+                }).addTo(this.map);
+            }
+
+            Swal.fire({title:'بدون موقعیت مکانی' ,text:'موقعیت مکانی ثبت شده ای در این بازه وجود ندارد', icon:'info', confirmButtonText:'تایید'})
+        }
+    })
+}
+
+
+// retrieve all registered locations of the user
+app_methods.showUserAllLocations = function(user_uuid,check_selected_time){
+    if (check_selected_time == false) {this.user_locations_selected_time = 'all'}
+
+    data = {'user_uuid': user_uuid, 'time':this.user_locations_selected_time}
+    axios.post('/get-user-all-locations', data).then(response => {  
+
+        if (response.data['status-code'] == 200) {
+            this.change_panel('manager', 'user-all-locations')
+            this.userAllLocations = response.data['result']
+            
+            this.$nextTick(() => {
+                if (this.map != null) {
+                    this.map.off(); this.map.remove();
+                };
+                
                 this.map = L.map('user_all_locs_map').setView([this.userAllLocations[0][2]['latitude'], this.userAllLocations[0][2]['longitude']], 14);
                 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                     maxZoom: 19,
                 }).addTo(this.map);
+                
+            
+                var blueIcon = L.icon({iconUrl: './static/css/images/blue.png',shadowUrl: '/static/css/images/marker-shadow.png',
+                iconSize:[38, 40],shadowSize:[38, 40],
+                });
+            
+                for (var i=1 ; i < this.userAllLocations.length;i++ ){
+                    this.marker = L.marker([ this.userAllLocations[i][2]['latitude'], this.userAllLocations[i][2]['longitude']], {icon: blueIcon}).addTo(this.map);
+                    this.marker.bindPopup(
+                    "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[i][3]['date'] + "</h6>" +
+                    "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[i][3]['time'] + "</h6>"
+                    );
+                }
+                
+                for (var i=1 ; i < this.userAllLocations.length;i++ ){
+                    this.marker = L.marker([this.userAllLocations[0][2]['latitude'], this.userAllLocations[0][2]['longitude']]).addTo(this.map);
+                    this.marker.bindPopup("<h6>آخرین موقعیت مکانی ثبت شده</h6>" +
+                                    "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[0][3]['date'] + "</h6>" +
+                                    "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[0][3]['time'] + "</h6>"
+                                    );
+                }
+            })
+        }
+        // Without registered location
+        else{
+
+            if (this.map != null){
+                this.map.off();
+                this.map.remove();
+                this.map = L.map('user_all_locs_map').setView([27.1963, 56.2884], 14);
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19,
+                }).addTo(this.map);
             }
-            Swal.fire({title:'بدون موقعیت مکانی' ,text:'کاربر موقعیت مکانی ثبت شده ای ندارد', icon:'info', confirmButtonText:'تایید'})
+
+            Swal.fire({title:'بدون موقعیت مکانی' ,text:'موقعیت مکانی ثبت شده ای در این بازه وجود ندارد', icon:'info', confirmButtonText:'تایید'})
         }
     })    
 }
+
 
 
 app_methods.showLocation = function(longitude,latitude){
@@ -193,7 +296,8 @@ app_methods.changeSelectedKaravan = function(){
             this.getSouvenirPhotos(1);
             break;
             
-            case 'registered-locations':
+        case 'registered-locations':
+            this.show_all_users_locations_on_map = false;
             this.getRegisteredLocations(1);
             break;
         }
@@ -353,15 +457,26 @@ Vue.createApp({
 
         // selected time to filter by time for all panels
         selected_time: 'all',
+        user_locations_selected_time: 'all',
         selected_event: 'all',
 
         map: null,
+        marker: null,
+        shipLayer: null,
         show_location: '',
 
         souvenir_photos: '',
         registered_locations: '',
+        show_all_users_locations_on_map: false,
 
         userAllLocations: '',
+
+        map_icons_name:[
+                        'pink2.png', 'purple.png', 'brown.png', 
+                        'yellow.png', 'white.png', 'gray.png',
+                        'black.png', 'red.png', 'orange.png', 'blue.png',
+                        'green.png', 'orange2.png','caribbean-blue.png', 'pink.png', 
+                        ]
     } },
     
     delimiters: ["${", "}$"],    

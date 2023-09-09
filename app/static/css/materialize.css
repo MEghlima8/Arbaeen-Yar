@@ -374,7 +374,7 @@ form p:last-child {
   position: relative;
   width: 40px;
   height: 15px;
-  background-color: #818181;
+  background-color: #51a2e3;
   border-radius: 15px;
   margin-right: 10px;
   transition: background 0.3s ease;
@@ -388,7 +388,7 @@ form p:last-child {
   display: inline-block;
   width: 21px;
   height: 21px;
-  background-color: #F1F1F1;
+  background-color: #1c67a3;
   border-radius: 21px;
   box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.4);
   left: -5px;

@@ -146,7 +146,7 @@
             
             <!-- Top Bar -->
             <nav class="navbar">
-                <div v-if="selected_karavan_uuid != '' && manager_panel != 'user-all-locations'" class="topnav1">
+                <div v-if="selected_karavan_uuid != '' && manager_panel != 'user-all-locations' && show_all_users_locations_on_map == false" class="topnav1">
                     <div class="search-container1 ">
                       <form>
                         <input v-model="search_bar_val" type="text" placeholder="جستجو با نام یا نام کاربری..." style="font: 1.25rem/3">
@@ -231,7 +231,7 @@
                             <div v-if="show_panel == 'true'" class="card">
                                 
                                 <div class="body panels">
-                                    <h3>اطلاعات اعضای کاروان<h3>
+                                    <h3>اطلاعات اعضای کاروان</h3>
                                     <div class="table-responsive">
                                         
                                         <table class="table table-hover dashboard-task-infos">
@@ -255,7 +255,7 @@
                                                     -->
                                                     <td>${ user[3] }$</td>
                                                     <td>${ user[4] }$</td>
-                                                    <td > <a @click.prevent="showUserAllLocations(user[0],1)" target="_blank" href="#" >مشاهده</a> </td>
+                                                    <td > <a @click.prevent="showUserAllLocations(user[0],false)" target="_blank" href="#" >مشاهده</a> </td>
                                                     <td>${ user[5] }$</td>
                                                 </tr>
                                             </tbody>
@@ -325,7 +325,7 @@
                             <div style="height:80px;"></div>
                             <div v-if="show_panel == 'true'" class="card">
                                 <div class="body panels">
-                                    <h3 class="col-md-5">عکس های یادگاری<h3>
+                                    <h3>عکس های یادگاری</h3>
                                     
                                     <div class="table-responsive">
                                         <table class="table table-hover dashboard-task-infos">
@@ -409,8 +409,26 @@
                             <div v-if="show_panel == 'true'" class="card">
 
                                 <div class="body panels">
-                                    <h3>موقعیت های مکانی ثبت شده<h3>
-                                    <div class="table-responsive">
+                                    <div class="col-xs-12 col-sm-12">
+                                        <div class="col-md-10">
+                                            <h3>موقعیت های مکانی ثبت شده<h3>
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <!-- Switch Button -->
+                                            <div class="switch" style="padding-top:20px;">
+                                                <label @change="changePanelForAllUsersLocations">
+                                                    <i class="material-icons">view_list</i>
+                                                    <input type="checkbox" checked>
+                                                    <span style="margin-top:-15px" class="lever"></span>
+                                                    <i class="material-icons">location_on</i>
+                                                </label>
+                                            </div>
+                                            <!--#END# Switch Button -->
+                                        </div>
+                                    </div>
+
+                                    <div v-if="show_all_users_locations_on_map == false" class="table-responsive">
                                         <table class="table table-hover dashboard-task-infos">
                                             <thead>
                                                 <tr>
@@ -449,20 +467,27 @@
                                         </table>
 
                                     </div>
-                                    <div class="pagination">
+                                    <div v-if="show_all_users_locations_on_map == false" class="pagination">
                                         <a v-for="(page_num,index) in pages"
                                             :key="index"
                                             @click.prevent="getRegisteredLocations(index + 1)"
                                             :class="{ active: isActivePage(index + 1) }"
                                             href="#">${ page_num }$</a>
                                     </div>
+
+
+                                    <!-- Show all users location on map -->
+                                    <div v-if="show_all_users_locations_on_map == true" id="all_users_locs_on_map" class="map" ></div>
+
+                                    
                                 </div>
-                            </div>
+                            </div> Inbounds
+
                         </div>
                     </div>
                 </div>
             </section>
-            <!-- # Manager show user locations -->
+            <!-- # Manager show all users locations -->
 
 
 
@@ -472,44 +497,9 @@
                 <h4 style="text-align:center;">موقعیت های مکانی ثبت شده ${ userAllLocations[0][4] }$</h4>
                 <div class="container-fluid">
                     <div class="row clearfix" style="margin-right:60px;">
-                        <!--
-                        <div class="col-xs-6 col-sm-6">
-                            <div class="card">
-                                <div class="body panels locations-panel">
-                                    <h3>موقعیت های مکانی ثبت شده<h3>
-                                    <div class="table-responsive">
-                                        <table class="table table-hover dashboard-task-infos">
-                                            <thead>
-                                                <tr>
-                                                    <th>شماره موقعیت</th>
-                                                    <th>تاریخ</th>
-                                                    <th>زمان</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr v-for="location in userAllLocations">
-                                                    <td>${ location[0] }$</td>
-                                                    <td>${ location[7]['date'] }$</td>
-                                                    <td>${ location[7]['time'] }$</td>
-                                                </tr>
-                                                                       
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="pagination" style="padding-right: 215px;">
-                                        <a v-for="(page_num,index) in pages"
-                                            :key="index"
-                                            @click.prevent="showUserAllLocations(userAllLocations[0][3], index + 1)"
-                                            :class="{ active: isActivePage(index + 1) }"
-                                            href="#">${ page_num }$</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        -->
 
-                        
-                        <div id="user_all_locs_map" class="userAllLocs" ></div>
+                        <div id="user_all_locs_map" class="map"></div>
+
                         <div class="col-xs-12 col-sm-12">
                             <div class="col-md-7" style="margin-top:40px;">
                                 <a @click.prevent="change_panel('manager','manager-dashboard')" class="btn-cancel">بازگشت به صفحه اصلی</a>
@@ -518,7 +508,7 @@
                             <div class="col-md-4" style="margin-top:10px;">
                                 <label for="category">فیلتر زمان</label>
                                 <div class="select" style="width:200px">
-                                    <select v-model="selected_time" @change="showUserAllLocations(userAllLocations[0][6])">
+                                    <select v-model="user_locations_selected_time" @change="showUserAllLocations(userAllLocations[0][6],true)">
                                         <option value="all">همه</option>
                                         <option value="today">امروز</option>
                                         <option value="week">این هفته</option>
@@ -540,7 +530,7 @@
         </section>
 
     </div>
-
+    
     <!-- leaflet -->
     <script src="../static/scripts/leaflet.js"  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     

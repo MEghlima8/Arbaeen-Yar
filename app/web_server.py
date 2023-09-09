@@ -96,10 +96,20 @@ def get_registered_locations():
     res = db.db.getKaravanRequestInfo(j_body_data['karavan_uuid'], '/send-my-location', j_body_data['search_value'])
     res = web_process.handleResultByTime(res,j_body_data['time'])
 
+    if j_body_data['page_index'] =='all':   # Retrieve all, not just one page
+        if res == []:
+            result = {"status-code":204 , "result":'Without registered location'}
+        else:
+            result = {"status-code":200 , "result":res}
+        return result
+        
     page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
-    result = {"status-code":200 , "result":page_items,
-              "count_pages":count_all_pages, "active_page":j_body_data["karavan_uuid"]
-              }
+    if page_items == []:
+        result = {"status-code":204 , "result":'Without registered location'}
+    else:
+        result = {"status-code":200 , "result":page_items,
+                  "count_pages":count_all_pages, "active_page":j_body_data["karavan_uuid"]
+                  }
     return result 
 
 
