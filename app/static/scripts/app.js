@@ -9,8 +9,8 @@ app_methods.change_panel = function(panel,manager_panel,change_section=false){
     this.panel = panel;
     this.manager_panel = manager_panel;
 
-    // if(manager_panel == 'manager-dashboard')
     if (manager_panel != 'registered-locations'){ this.show_all_users_locations_on_map = false };
+    if(manager_panel != 'souvenir-photos') { this.show_all_users_souvenir_album = false; }
     
 }
 
@@ -52,6 +52,7 @@ app_methods.getSouvenirPhotos = function(page){
     axios.post('/get-souvenir-photos', data).then(response => {
 
         if (response.data['status-code'] == 200) {
+            console.log(response.data)
             this.souvenir_photos = response.data['result']
 
             for (var i=0 ; i < this.souvenir_photos.length;i++ ){
@@ -80,6 +81,19 @@ app_methods.changePanelForAllUsersLocations = function(){
         this.getRegisteredLocations(1);
     }
 }
+
+
+app_methods.changePanelForAllUsersSouvenirPhotos = function(){
+    this.show_all_users_souvenir_album = !this.show_all_users_souvenir_album;
+
+    if (this.show_all_users_souvenir_album){
+        this.showAllUsersSouvenirAlbum();
+    }
+    else{
+        this.getSouvenirPhotos(1);
+    }
+}
+
 
 // retrieve karavan users locations
 app_methods.getRegisteredLocations = function(page){
@@ -131,6 +145,13 @@ app_methods.getKaravanUsersInfo = function(page){
         }
     })
 }
+
+
+
+app_methods.showAllUsersSouvenirAlbum = function(){
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':'all', 'time':this.selected_time, 'search_value':this.search_bar_val}
+}
+
 
 
 app_methods.showAllUsersLocationsOnMap = function(){
@@ -468,6 +489,7 @@ Vue.createApp({
         souvenir_photos: '',
         registered_locations: '',
         show_all_users_locations_on_map: false,
+        show_all_users_souvenir_album: false,
 
         userAllLocations: '',
 
