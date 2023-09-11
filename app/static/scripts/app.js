@@ -86,10 +86,7 @@ app_methods.changePanelForAllUsersLocations = function(){
 app_methods.changePanelForAllUsersSouvenirPhotos = function(){
     this.show_all_users_souvenir_album = !this.show_all_users_souvenir_album;
 
-    if (this.show_all_users_souvenir_album){
-        this.showAllUsersSouvenirAlbum();
-    }
-    else{
+    if (this.show_all_users_souvenir_album == false){
         this.getSouvenirPhotos(1);
     }
 }
@@ -144,12 +141,6 @@ app_methods.getKaravanUsersInfo = function(page){
             Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'})
         }
     })
-}
-
-
-
-app_methods.showAllUsersSouvenirAlbum = function(){
-    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':'all', 'time':this.selected_time, 'search_value':this.search_bar_val}
 }
 
 
@@ -247,21 +238,25 @@ app_methods.showUserAllLocations = function(user_uuid,check_selected_time){
                 iconSize:[38, 40],shadowSize:[38, 40],
                 });
             
-                for (var i=1 ; i < this.userAllLocations.length;i++ ){
-                    this.marker = L.marker([ this.userAllLocations[i][2]['latitude'], this.userAllLocations[i][2]['longitude']], {icon: blueIcon}).addTo(this.map);
-                    this.marker.bindPopup(
-                    "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[i][3]['date'] + "</h6>" +
-                    "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[i][3]['time'] + "</h6>"
-                    );
+
+                this.marker = L.marker([this.userAllLocations[0][2]['latitude'], this.userAllLocations[0][2]['longitude']]).addTo(this.map);
+                this.marker.bindPopup("<h6>آخرین موقعیت مکانی ثبت شده</h6>" +
+                                "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[0][3]['date'] + "</h6>" +
+                                "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[0][3]['time'] + "</h6>"
+                                );
+                            
+                if (this.userAllLocations.length != 1){
+                    for (var i=1 ; i < this.userAllLocations.length;i++ ){
+                        this.marker = L.marker([ this.userAllLocations[i][2]['latitude'], this.userAllLocations[i][2]['longitude']], {icon: blueIcon}).addTo(this.map);
+                        this.marker.bindPopup(
+                        "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[i][3]['date'] + "</h6>" +
+                        "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[i][3]['time'] + "</h6>"
+                        );
+                    }
                 }
+
                 
-                for (var i=1 ; i < this.userAllLocations.length;i++ ){
-                    this.marker = L.marker([this.userAllLocations[0][2]['latitude'], this.userAllLocations[0][2]['longitude']]).addTo(this.map);
-                    this.marker.bindPopup("<h6>آخرین موقعیت مکانی ثبت شده</h6>" +
-                                    "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[0][3]['date'] + "</h6>" +
-                                    "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[0][3]['time'] + "</h6>"
-                                    );
-                }
+                            
             })
         }
         // Without registered location
