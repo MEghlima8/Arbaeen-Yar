@@ -13,6 +13,7 @@ services:
           - db
         volumes:
           - /var/docker-data/karavan-management/static/users:/app/static/users
+          - /var/docker-data/karavan-management/static/temp:/app/static/temp
     db:
         image: postgres
         restart: always

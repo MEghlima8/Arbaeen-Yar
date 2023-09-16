@@ -1,6 +1,8 @@
 from App.Controller import db_postgres_controller as db
 from App.Controller.validation import Valid
 import uuid
+import random
+import string
 
 
 class Manager:
@@ -45,17 +47,10 @@ class User:
 
     # Do signup user
     def signup(self,karavan_uuid):
-        valid = Valid(self.username, self.fullname, self.password)
-        check_user_info = valid.signup()
-        
-        if check_user_info == True:
-            user_uuid = uuid.uuid4().hex  
-            db.db.signupUser(user_uuid, self.username, self.fullname, self.password)
-            db.db.addUserToKaravanUsers(uuid.uuid4().hex, user_uuid, karavan_uuid, 'user')
+        password = ''.join(random.choice(string.ascii_letters) for _ in range(12))
+        user_uuid = uuid.uuid4().hex  
+        db.db.signupUser(user_uuid, self.username, self.fullname, password)
+        db.db.addUserToKaravanUsers(uuid.uuid4().hex, user_uuid, karavan_uuid, 'user')
 
-            res = {"status":"True"}
-            return res
-        
-        res = {"status":"False", "result": check_user_info}
+        res = {"status":"True"}
         return res
-        

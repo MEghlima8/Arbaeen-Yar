@@ -3,9 +3,11 @@ from flask import Flask, request, render_template, session
 from App.Controller import web_process
 from App.Controller import db_postgres_controller as db
 from App.Controller.user_controller import Manager, User
-import random
-import string
 import math
+from App.Controller.validation import Valid
+import csv
+import os
+import uuid
 
 
 app = Flask(__name__)
@@ -29,15 +31,47 @@ def index():
 
 @app.route('/add-new-user-to-karavan', methods=['POST'])    
 def add_new_user_to_karavan():
-    j_body_data = request.get_json()
-    user_password = ''.join(random.choice(string.ascii_letters) for _ in range(12))
-    o_user = User(j_body_data['fullname'], j_body_data['username'], user_password)
-    res_add_user = o_user.signup(j_body_data['karavan_uuid'])
-    
-    if res_add_user['status'] == 'True':
-        resp = {"result": "User added successfully", "status-code":201}
-    else:
-        resp = {"result": res_add_user, "status-code":400}
+    try:
+        # Save excel file in temp folder
+        excel_file = request.files['UsersExcelFile']
+        filename = uuid.uuid4().hex + '.csv'
+        path = os.path.join(config.configs["UPLOAD_TEMP_FILE"], filename)
+        excel_file.save(path)
+        
+        karavan_uuid = request.form['karavan_uuid']
+        
+        with open(path, 'r') as file:
+            # Read excel file
+            csvreader = csv.reader(file)
+            users = {}
+            for row in csvreader:
+                # Validate signup info       
+                valid = Valid(row[0], row[1])
+                check_user_info = valid.signup()
+                if check_user_info != True:
+                    resp = {"result": check_user_info, "status-code":400,"username": row[0], "fullname":row[1]}
+                    return resp
+                users[row[0]] = row[1]
+            
+            for username in users:
+                o_user = User(users[username], username)  # Send fullname and username
+                o_user.signup(karavan_uuid)
+            resp = {"result": "Users added successfully", "status-code":201}
+        
+    except:
+        j_body_data = request.get_json()
+        fullname = j_body_data['fullname']
+        username = j_body_data['username'] 
+        
+        # Validate signup info       
+        valid = Valid(username, fullname)
+        check_user_info = valid.signup()
+        
+        if check_user_info :
+            o_user = User(fullname, username)
+            o_user.signup(j_body_data['karavan_uuid'])
+            resp = {"result": "User added successfully", "status-code":201}
+                    
     return resp
 
     

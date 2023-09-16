@@ -99,7 +99,6 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for command in commands:
         valid_command = False
         pattern, step, callback = command
-        # import pdb;pdb.set_trace()
         if match(pattern, text) and match(step, STEP):
             valid_command = True
             await callback(update,context,text,STEP,chat_id)

@@ -27,4 +27,5 @@ configs = {
     'BASE_FILE_URL': os.getenv('BASE_FILE_URL') ,
     
     'UPLOAD_USER_FILE': os.getenv('UPLOAD_USER_FILE'),
+    'UPLOAD_TEMP_FILE': os.getenv('UPLOAD_TEMP_FILE'),
 }

@@ -78,16 +78,9 @@ class Valid:
     # It checks whether the signup info are valid
     def signup(self):    
         check_valid_username = self.is_valid_username()
-        if not check_valid_username:
+        if check_valid_username != True:
             return check_valid_username
         
         check_valid_fullname = self.check_fullname_persian()
-        if not check_valid_fullname :
-            return check_valid_fullname
+        return check_valid_fullname
         
-        check_valid_password = self.is_valid_password()
-        return check_valid_password
-        
-
-
-
