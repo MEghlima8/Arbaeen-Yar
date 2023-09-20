@@ -28,4 +28,7 @@ configs = {
     
     'UPLOAD_USER_FILE': os.getenv('UPLOAD_USER_FILE'),
     'UPLOAD_TEMP_FILE': os.getenv('UPLOAD_TEMP_FILE'),
+    
+    # Help user to send image as file
+    'HELP_USER_SEND_FILE': os.getenv('HELP_USER_SEND_FILE')
 }

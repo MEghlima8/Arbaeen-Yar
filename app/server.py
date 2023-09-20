@@ -22,12 +22,10 @@ async def cancel(_update, context, _text, _STEP, chat_id):
         db.db.addUserFromBotToDB(uuid.uuid4().hex, chat_id)
         await context.bot.send_message(chat_id, text='بازگشت به صفحه اصلی انجام شد')
         db.db.changeUserSTEP('get-user-username-to-signin', chat_id)   
-    elif account_status[0][0] and account_status[0][1]:
+    elif account_status[0][0] and account_status[0][1]['status']=='true':
         await context.bot.send_message(chat_id, text='بازگشت به صفحه اصلی انجام شد \nیکی از گزینه های زیر را انتخاب کنید', reply_markup=reply_markup_start_user)
         db.db.changeUserSTEP('home', chat_id)
         
-
-
 
 # Start bot
 async def start(_update, context, _text, _STEP, chat_id):
@@ -38,12 +36,16 @@ async def start(_update, context, _text, _STEP, chat_id):
         await context.bot.send_message(chat_id=chat_id, text='سلام به ربات {} خوش آمدید \nلطفا نام کاربری خود را وارد کنید :'.format(config.configs['SYSTEM_NAME']))
         db.db.changeUserSTEP('get-user-username-to-signin', chat_id)
         return
-    elif account_status[0][0] and account_status[0][1]:
+    elif account_status[0][0] and account_status[0][1]['status']=='true':
         await context.bot.send_message(chat_id, text='خوش آمدید \nیکی از گزینه های زیر را انتخاب کنید', reply_markup=reply_markup_start_user)
         db.db.changeUserSTEP('home', chat_id)
         return
 
 
+async def help(_update, context, _text, _STEP, chat_id):
+    help_user_send_file = config.configs['HELP_USER_SEND_FILE']
+    await context.bot.send_video(chat_id, help_user_send_file)
+    await context.bot.send_message(chat_id, text=' برای ارسال تصویر به صورت فایل ابتدا از سمت چپ و پایین بر روی آیکون + ضربه بزنید سپس بر روی ارسال به صورت فایل ضربه بزنید')
 
 
 commands = [
@@ -51,7 +53,7 @@ commands = [
     
     # COMMANDS
     [r"/start", r".+", start], # text - step - callback
-    
+    [r"/help", r".+", help],
     [r"/cancel", r".+", cancel],
     
     [r"/send-my-location", r".+", bot_process.send_my_location],

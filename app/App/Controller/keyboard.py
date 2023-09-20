@@ -6,6 +6,12 @@ keyboard_cancel = [
 ]
 reply_markup_cancel = InlineKeyboardMarkup(keyboard_cancel)
 
+keyboard_cancel_help = [
+    [InlineKeyboardButton("بازگشت به صفحه اصلی", callback_data="/cancel")],
+    [InlineKeyboardButton("راهنمای ارسال تصویر به صورت فایل", callback_data="/help")]
+]
+reply_markup_cancel_help = InlineKeyboardMarkup(keyboard_cancel_help)
+
 
 keyboard_start_user = [
     [InlineKeyboardButton("ارسال موقعیت مکانی", callback_data="/send-my-location")],

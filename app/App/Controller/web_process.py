@@ -67,3 +67,27 @@ def handleResultByEvent(requests, event):
         except:
             pass
     return result
+
+
+def convert_add_user_error_to_persian(error):
+    match error:
+        case 'no_valid_fullname':
+            return 'نام و نام خانوادگی باید به فارسی باشد'
+        case 'empty_fullname':
+            return 'نام و نام خانوادگی ثبت نشده است'
+            
+        case 'empty_password':
+            return 'رمز عبور ثبت نشده است'
+        case 'char_password':
+            return 'طول رمز عبور باید بیشتر از 8 کاراکتر و فقط شامل حرف انگلیسی و کاراکتر خاص و عدد باشد'
+        case 'used_info_in_password':
+            return 'رمز عبور مطابقت زیادی با نام کاربری دارد. رمز عبور دیگری را انتخاب کنید'
+            
+        case 'empty_username':
+            return 'نام کاربری ثبت نشده است'
+        case 'duplicate_username':
+            return 'نام کاربری تکراری می باشد'
+        case 'length_username':
+            return 'نام کاربری بین 3 تا 20 کاراکتر باید باشد'
+        case 'char_username':
+            return 'نام کاربری فقط می تواند شامل حروف کوچک و بزرگ انگلیسی و اعداد و نقطه و زیرخط(آندرلاین) باشد'

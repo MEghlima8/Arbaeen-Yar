@@ -50,10 +50,9 @@
 
 </head>
 
-<body class="theme-red">    
+<body class="theme-teal">    
 
     <div id="app">
-
 
         <!-- Page Loader -->
         <div class="page-loader-wrapper">
@@ -136,7 +135,7 @@
                                     <i class="material-icons">person</i>
                                 </span>
                                 <div class="form-line">
-                                    <input type="username" class="form-control" name="username" placeholder="نام کاربری" required>
+                                    <input v-model="username" type="username" class="form-control" name="username" placeholder="نام کاربری" required>
                                 </div>
                             </div>
                             <div class="input-group">
@@ -189,7 +188,7 @@
                             <!-- Call Search -->
                             <li v-if="selected_karavan_uuid != '' && manager_panel != 'user-all-locations' && 
                                     show_all_users_locations_on_map == false && show_all_users_souvenir_album != true && 
-                                    manager_panel != 'add-user-to-karavan'">
+                                    manager_panel != 'add-user-to-karavan' && manager_panel != 'edit-user-info'">
                                 <a @click.prevent="showSearchBar(true)" href="#" >
                                     <i class="material-icons">search</i>
                                 </a>
@@ -201,7 +200,7 @@
             </nav>
             <!-- #Top Bar -->
             
-            <!-- Left Sidebar -->
+            <!-- Right Sidebar -->
             <section>
                 <aside id="leftsidebar" class="sidebar">
                     <!-- User Info -->
@@ -210,8 +209,7 @@
                             <img src="../static/images/user.png" width="48" height="48" alt="User" />
                         </div>
                         <div class="info-container">
-                            <div class="name" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">John Doe</div>
-                            <div class="name">john.doe@example.com</div>
+                            <h5 class="name">${ static_fullname }$</h5>
                         </div>
                     </div>
                     <!-- #User Info -->
@@ -225,6 +223,7 @@
                                     <span>صفحه اصلی</span>
                                 </a>
                             </li>
+
                             <li style="border-bottom:inset;">
                                 <a @click.prevent="addKaravan" href="#">
                                     <i class="material-icons">groups_3</i>
@@ -257,7 +256,7 @@
                     <!-- #Menu -->
                 </aside>
             </section>
-            <!-- #END# Left Sidebar -->
+            <!-- #END# Right Sidebar -->
 
             <!-- Manager dashboard show all users -->
             <section v-if="manager_panel == 'manager-dashboard'" class="content">
@@ -289,18 +288,30 @@
                                                 <tr>
                                                     <th>نام</th>
                                                     <th>نام کاربری</th>
-                                                    <th>رمز عبور</th>
                                                     <th>موقعیت های مکانی</th>
                                                     <th>وضعیت حساب</th>
+                                                    <th>زمان فعال شدن حساب</th>
+                                                    <th>آخرین فعالیت</th>
+                                                    <th>ویرایش اطلاعات</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <tr v-for="user in users_info">
                                                     <td>${ user[2] }$</td>
                                                     <td>${ user[3] }$</td>
-                                                    <td>${ user[4] }$</td>
                                                     <td> <a @click.prevent="showUserAllLocations(user[0],false)" target="_blank" href="#" >مشاهده</a> </td>
-                                                    <td>${ user[5] }$</td>
+
+                                                    <td v-if="user[5]['status'] == 'true'">فعال</td>
+                                                    <td v-else>غیرفعال</td>
+
+                                                    <td v-if="user[5]['status'] == 'true'">${ user[5]['time'] }$ | ${ user[5]['date'] }$</td>
+                                                    <td v-else>-</td>
+
+                                                    <td v-if="user[6] == null">بدون فعالیت</td>
+                                                    <td v-else>${ user[6]['time'] }$ | ${ user[6]['date'] }$</td>
+
+                                                    <td><a @click.prevent="edit_user_info_panel(user[0],user[2])" href="#"><i class="material-icons">mode_edit</i></a></td>
+
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -323,6 +334,60 @@
                 </div>
             </section>
             <!-- #END# Manager dashboard show all users -->
+
+
+            <!-- Edit user info -->
+            <section v-show="manager_panel == 'edit-user-info'" class="content">
+                <div class="container-fluid">
+                    <div class="row clearfix">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <div class="card">
+
+                                <div class="body">
+
+                                    <h3>تغییر اطلاعات ${current_user_fullname}$ </h3>
+                                    </br>
+                                    <div class="alert" style="background-color: #006666;">
+                                        <strong>اگر نمی خواهید همه ی اطلاعات را تغییر دهید آن ها را خالی رها کنید</strong>
+                                    </div>
+
+                                    <div class="clearfix">
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-addon">
+                                                <i class="material-icons">person</i>
+                                            </span>
+                                            <div class="form-line">
+                                                <input v-model="fullname" type="text" class="form-control" placeholder="نام و نام خانوادگی جدید">
+                                            </div>
+                                        </div>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-addon">
+                                                <i class="material-icons">account_circle</i>
+                                            </span>
+                                            <div class="form-line">
+                                                <input v-model="username" type="text" class="form-control" placeholder="نام کاربری جدید">
+                                            </div>
+                                        </div>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-addon">
+                                                <i class="material-icons">password</i>
+                                            </span>
+                                            <div class="form-line">
+                                                <input v-model="password" type="password" class="form-control" placeholder="رمز عبور جدید">
+                                            </div>
+                                        </div>
+
+                                        <button @click.prevent="editUserInfo()" style="padding:5px 45px;" type="button" class="btn btn-success waves-effect">اعمال تغییرات</button>
+                                        <button @click.prevent="change_panel('manager','manager-dashboard')" style="padding:5px 40px; margin-right:20px;" type="button" class="btn btn-danger waves-effect">بازگشت</button>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- #END# Edit user info -->
 
 
             <!-- Manager show souvenir photos -->
@@ -382,6 +447,7 @@
                                                     <th>نام کاربری</th>
                                                     <th>تاریخ</th>
                                                     <th>زمان</th>
+                                                    <th>آدرس موقعیت مکانی عکس</th>
                                                     <th>رویداد</th>
                                                     <th>نام سرویس</th>
                                                     <th>عکس دریافتی</th>
@@ -393,6 +459,8 @@
                                                     <td>${ photo[1] }$</td>
                                                     <td>${ photo[3]['date'] }$</td>
                                                     <td>${ photo[3]['time'] }$</td>
+                                                    <td v-if="photo[4]['address'] == 'empty'">موقعیت مکانی ثبت نشده است</td>
+                                                    <td v-else>${ photo[4]['address']['display_name'] }$</td>
                                                     <td>${ photo[4]['event'] }$</td>
                                                     <td>${ photo[5] }$</td>
                                                     <td> <a :href="photo[4]['path']" target="_blank">نمایش</a> </td>
@@ -442,7 +510,7 @@
 
                 </div>
             </section>
-
+            <!-- #END# Manager show souvenir photos -->
 
             <!-- Manager show all users locations -->
             <section v-if="manager_panel == 'registered-locations'" class="content">
@@ -492,8 +560,7 @@
                                                     <th>نام کاربری</th>
                                                     <th>تاریخ</th>
                                                     <th>زمان</th>
-                                                    <th>طول جغرافیایی</th>
-                                                    <th>عرض جغرافیایی</th>
+                                                    <th>آدرس</th>
                                                     <th>نام سرویس</th>
                                                     <th>نمایش روی نقشه</th>
                                                 </tr>
@@ -504,10 +571,9 @@
                                                     <td>${ location[1] }$</td>
                                                     <td>${ location[3]['date'] }$</td>
                                                     <td>${ location[3]['time'] }$</td>
-                                                    <td>${ location[4]['longitude'] }$</td>
-                                                    <td>${ location[4]['latitude'] }$</td>
+                                                    <td>${ location[4]['display_name'] }$</td>
                                                     <td>${ location[5] }$</td>
-                                                    <td> <a @click.prevent="showLocation(location[4]['longitude'], location[4]['latitude'])" href="#">
+                                                    <td> <a @click.prevent="showLocation(location[4]['lon'], location[4]['lat'])" href="#">
                                                         <span v-if="show_location == 'true'" >بستن</span>
                                                         <span v-else >نمایش</span>
                                                         </a>
@@ -529,7 +595,12 @@
                                     </div>
                                     
                                     <!-- Show all users location on map -->
-                                    <div v-if="show_all_users_locations_on_map == true" id="all_users_locs_on_map" class="map" ></div>
+                                    <div v-if="show_all_users_locations_on_map == true">
+                                        <div class="alert" style="background-color: #006666">
+                                            <strong>موقعیت مکانی های هر کاربر با یک رنگ مشخص شده است</strong>
+                                        </div>
+                                        <div id="all_users_locs_on_map" class="map"></div>
+                                    </div>
                                 
                                 </div>
                             </div>
@@ -551,7 +622,7 @@
                                     <h4 style="text-align:center;">موقعیت های مکانی ثبت شده ${ userAllLocations[0][4] }$</h4>
                                     <div class="col-sm-8" style="margin-top:22px;">
                                         <div class="icon-and-text-button-demo">
-                                            <button @click.prevent="change_panel('manager','manager-dashboard')" type="button" class="btn btn-danger waves-effect" style="width:150px; height:35px;">
+                                            <button @click.prevent="change_panel('manager','manager-dashboard')" type="button" class="btn waves-effect" style="width:150px; height:35px; color:white; background-color: #66b2b2;">
                                                 <span>بازگشت</span>
                                             </button>
                                         </div>
@@ -573,6 +644,12 @@
                                 <div class="body">
                                     <div class="table-responsive">
 
+                                        <div class="col-md-12">
+                                            <div class="col-md-1" style="width: 35px;"> <img src="../static/css/images/marker-icon.png" width="22" height="30" /> </div>
+                                            <b class="col-md-5">آخرین موقعیت مکانی ثبت شده</b>
+                                            <div class="col-md-1" style="width: 35px;"> <img src="../static/css/images/blue.png" width="35" height="30" /> </div>
+                                            <b class="col-md-5">موقعیت های مکانی ثبت شده</b>
+                                        </div>
                                         <div id="user_all_locs_map" class="map"></div>
                             
                                     </div>
@@ -586,19 +663,19 @@
             </section>
             <!-- # Manager show user all locations -->
 
-            <!-- Input Group -->
+            <!-- Add user to karavan -->
             <section v-show="manager_panel == 'add-user-to-karavan'" class="content">
                 <div class="container-fluid">
                     <div class="row clearfix">
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                            <div class="card">
+                            <div class="card" style="padding-bottom: 40px;">
 
                                 <div class="body">
 
                                     <h4>وارد کردن دستی اطلاعات</h4>
-
-                                    <div class="row clearfix">
-                                        <div class="col-md-5">
+                                    </br>
+                                    <div class="row clearfix" style="margin-bottom: 150px;">
+                                        <div class="col-md-3">
                                             <div class="input-group input-group-lg">
                                                 <span class="input-group-addon">
                                                     <i class="material-icons">person</i>
@@ -608,11 +685,23 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-5">
+                                        <div class="col-md-3">
                                             <div class="input-group input-group-lg">
-                                                <span class="input-group-addon">@</span>
+                                                <span class="input-group-addon">
+                                                    <i class="material-icons">account_circle</i>
+                                                </span>
                                                 <div class="form-line">
                                                     <input v-model="username" type="text" class="form-control" placeholder="نام کاربری">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group input-group-lg">
+                                                <span class="input-group-addon">
+                                                    <i class="material-icons">password</i>
+                                                </span>
+                                                <div class="form-line">
+                                                    <input v-model="password" type="password" class="form-control" placeholder="رمز عبور">
                                                 </div>
                                             </div>
                                         </div>
@@ -621,17 +710,27 @@
                                         </div>
                                     </div>
 
-                                    <h2>------------------------------------------------------------------------------------------------------</h2>
-                                    </br>
-                                    </br>
-
                                     <h4>بارگذاری فایل اکسل</h4>
+                                    <div class="alert alert-warning">
+                                        <strong>توجه! </strong>نام کاربری در ستون اول و نام و نام خانوادگی در ستون دوم و رمز‌ عبور در ستون سوم قرار گیرد
+                                    </div>
+
+                                    <div style="margin-bottom: 65px;">
+                                        <span style="font-size: 18px;">فایل نمونه : </span>
+                                        <a href="../static/sample/users_info_sample.csv" download><i class="material-icons">download</i></a>
+                                    </div>
 
                                     <form action="">
-                                        <input style="margin-top:20px; margin-bottom:20px;" type="file" @change="handleExcelFile">
+                                        <input style="margin-top:20px; margin-bottom:20px;" type="file" accept=".csv" @change="handleExcelFile">
                                     </form>
-                                    <button @click.prevent="sendUserInfoToAddToKaravan('file')" style="padding:5px 40px;" type="button" class="btn btn-success waves-effect">ارسال فایل</button>
 
+                                    <div class="col-md-3" style="margin-right: -15px;">
+                                        <button @click.prevent="sendUserInfoToAddToKaravan('file')" style="padding:5px 40px;" type="button" class="btn btn-success waves-effect">ارسال فایل</button>
+                                    </div>
+
+                                    <span v-if="show_res_upload_excel" style="font-size: 18px;">نتیجه ارسال فایل : 
+                                        <a :href="res_upload_excel_href" download><i class="material-icons">download</i></a>
+                                    </span>
 
                                 </div>
                             </div>
@@ -639,7 +738,7 @@
                     </div>
                 </div>
             </section>
-            <!-- #END# Input Group -->
+            <!-- #END# Add user to karavan -->
 
         </div>
         <!-- #END# manager panel -->

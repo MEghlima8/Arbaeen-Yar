@@ -29,6 +29,25 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/edit-user-info', methods=['POST'])
+def edit_user_info():
+    j_body_data = request.get_json()
+    valid = Valid(username=j_body_data['username'], fullname=j_body_data['fullname'],
+                  password=j_body_data['password'])
+    res_valid = valid.signup(accept_none_val=True)
+    
+    if res_valid:
+        user = User(username=j_body_data['username'], fullname=j_body_data['fullname'],
+                    password=j_body_data['password'])
+        user.edit_info(j_body_data['uuid'])
+        resp = {"result": "User info edited successfully", "status-code":200}
+    else:
+        resp = {"result": res_valid, "status-code":400}
+        
+    return resp
+        
+
+
 @app.route('/add-new-user-to-karavan', methods=['POST'])    
 def add_new_user_to_karavan():
     try:
@@ -39,38 +58,61 @@ def add_new_user_to_karavan():
         excel_file.save(path)
         
         karavan_uuid = request.form['karavan_uuid']
+        res_add_users = []
+        status_code = 201   # As default, all users are valid
         
-        with open(path, 'r') as file:
+        with open(path, 'r') as file:    
             # Read excel file
             csvreader = csv.reader(file)
-            users = {}
-            for row in csvreader:
-                # Validate signup info       
-                valid = Valid(row[0], row[1])
-                check_user_info = valid.signup()
-                if check_user_info != True:
-                    resp = {"result": check_user_info, "status-code":400,"username": row[0], "fullname":row[1]}
-                    return resp
-                users[row[0]] = row[1]
+            users = []  # Append just valid users
             
-            for username in users:
-                o_user = User(users[username], username)  # Send fullname and username
-                o_user.signup(karavan_uuid)
-            resp = {"result": "Users added successfully", "status-code":201}
+            for row in csvreader:
+                
+                # To check there are three columns
+                try:
+                    # Validate signup info
+                    valid = Valid(row[0], row[1],row[2])  # row[0]:username, row[1]:fullname, row[2]:password
+                except:
+                    resp = {"result": "need three columns: username, fullname, password", "status-code":422}
+                    return resp
+                    
+                check_user_info = valid.signup()
+                
+                if check_user_info != True:
+                    error = web_process.convert_add_user_error_to_persian(check_user_info)
+                    res_add_users.append([row[0], row[1], row[2], error])
+                    status_code = 202
+                else:
+                    users.append([row[0],row[1], row[2]])    # example => ['username', 'fullname', 'password']
+                    res_add_users.append([row[0], row[1], row[2], 'ثبت شد'])
+        
+        # Add status column to excel file to return to user
+        with open(path, 'w') as file:
+            writer = csv.writer(file)
+            for user in res_add_users:
+                writer.writerow(user)
+                
+        for username in users:
+            o_user = User(username[1], username[0], username[2])  # Send fullname, username, password
+            o_user.signup(karavan_uuid)
+        resp = {"result": "Users added successfully", "status-code":status_code, "path_result_excel":path}
         
     except:
         j_body_data = request.get_json()
         fullname = j_body_data['fullname']
         username = j_body_data['username'] 
+        password = j_body_data['password'] 
         
         # Validate signup info       
-        valid = Valid(username, fullname)
+        valid = Valid(username, fullname, password)
         check_user_info = valid.signup()
         
-        if check_user_info :
-            o_user = User(fullname, username)
+        if check_user_info == True :
+            o_user = User(fullname, username, password)
             o_user.signup(j_body_data['karavan_uuid'])
             resp = {"result": "User added successfully", "status-code":201}
+        else:
+            resp = {"result": check_user_info, "status-code":400}
                     
     return resp
 
@@ -171,14 +213,14 @@ def signin_manager():
     o_manager = o_manager.signin()
     
     if o_manager == 'true':
+        fullname = db.db.getManagerFullname(s_username)[0]
         session['username'] = s_username
         session['logged_in'] = True
-        resp = {"result":"signed in " , "status-code":200}
+        resp = {"result":"signed in " , "status-code":200, "fullname":fullname}
                 
     elif o_manager == 'invalid':
         resp = {"result":o_manager , "status-code":400}
     return resp
-
 
 # Signup user
 @app.route('/signup-manager', methods=['POST'])

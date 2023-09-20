@@ -14,15 +14,16 @@ app_methods.showSearchBar = function(open){
     }
 }
 
-
 app_methods.change_panel = function(panel,manager_panel,change_section=false){
     this.search_bar_val = '',
     this.username = '';
     this.password = '';
     this.fullname = '';
+    this.UsersExcelFile = '';
     this.show_location = 'false'
     this.panel = panel;
     this.manager_panel = manager_panel;
+    this.show_res_upload_excel = false;
 
     if (manager_panel != 'registered-locations'){ this.show_all_users_locations_on_map = false };
     if(manager_panel != 'souvenir-photos') { this.show_all_users_souvenir_album = false; }
@@ -37,6 +38,16 @@ app_methods.isActivePage = function(index){
     return index === this.activeIndexPage;
 }
 
+
+// Function to generate a random RGB color
+app_methods.getRandomColor = function () {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
 
 // Search with fullname or username
 app_methods.onClick_searchBarAdvs = function(){
@@ -151,14 +162,7 @@ app_methods.getKaravanUsersInfo = function(page){
         if (response.data['status-code'] == 200) {
             this.users_info = response.data['result']
             this.pages = response.data['count_pages']
-            for (let i=0; i < this.users_info.length; i++){                
-                if (this.users_info[i][5] == 'true'){
-                    this.users_info[i][5] = 'فعال'
-                }
-                else {
-                    this.users_info[i][5] = 'غیر فعال'
-                }}
-                this.change_panel('manager', 'manager-dashboard')
+            this.change_panel('manager', 'manager-dashboard')
             }
         else {
             Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'})
@@ -166,6 +170,36 @@ app_methods.getKaravanUsersInfo = function(page){
     })
 }
 
+
+app_methods.edit_user_info_panel = function(user_uuid,fullname){
+    this.current_user_uuid = user_uuid;
+    this.current_user_fullname = fullname;
+    this.change_panel('manager','edit-user-info')
+}
+
+app_methods.editUserInfo = function(){
+    if (this.fullname == '' && this.username == '' && this.password == ''){
+        Swal.fire({title:'خطا' ,text:'حداقل یکی از فیلد ها باید پر باشد', icon:'error', confirmButtonText:'تایید'})
+        return;
+    }
+    data = {'fullname':this.fullname, 'username':this.username,
+            'password':this.password, 'uuid':this.current_user_uuid}
+    axios.post('/edit-user-info', data).then(response => {
+
+        if (response.data['status-code'] == 200){
+            Swal.fire({title:'موفق' ,text:'تغییر اطلاعات با موفقیت انجام شد', icon:'success', confirmButtonText:'تایید'});
+            this.getKaravanUsersInfo(1);
+        }
+        else if (response.data['result'] == 'no_valid_fullname') {Swal.fire({title:'خطا' ,text:'نام و نام خانوادگی را فقط به فارسی وارد کنید', icon:'error', confirmButtonText:'تایید'})}
+    
+        else if (response.data['result'] == 'empty_username') {Swal.fire({title:'خطا' ,text:'لطفا یک نام کاربری انتخاب کنید', icon:'error', confirmButtonText:'تایید'})}
+        else if (response.data['result'] == 'duplicate_username' ) {Swal.fire({title:'خطا' ,text:'نام کاربری وارد شده از قبل در سیستم وجود دارد. لطفا نام کاربری دیگری را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})}
+        else if (response.data['result'] == 'length_username') {Swal.fire({title:'خطا' ,text:'طول نام کاربری باید بین 3 تا 20 کاراکتر باشد', icon:'error', confirmButtonText:'تایید'})}
+        else if (response.data['result'] == 'char_username') {Swal.fire({title:'خطا' ,text:'نام کاربری فقط می تواند شامل حروف کوچک و بزرگ انگلیسی و اعداد و نقطه و زیرخط(آندرلاین) باشد', icon:'error', confirmButtonText:'تایید'})}
+    
+        else{ Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'}) }
+        })
+}
 
 app_methods.showAllUsersLocationsOnMap = function(){
     data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':'all', 'time':this.selected_time, 'search_value':this.search_bar_val}
@@ -183,7 +217,7 @@ app_methods.showAllUsersLocationsOnMap = function(){
                     this.map.off(); this.map.remove();
                 };
 
-                this.map = L.map('all_users_locs_on_map').setView([this.registered_locations[0][4]['latitude'], this.registered_locations[0][4]['longitude']], 13);
+                this.map = L.map('all_users_locs_on_map').setView([this.registered_locations[0][4]['lat'], this.registered_locations[0][4]['lon']], 14);
                 
                 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -195,16 +229,24 @@ app_methods.showAllUsersLocationsOnMap = function(){
                     if (remained_icons.length == 0) { remained_icons = [...this.map_icons_name] }
 
                     if(this.registered_locations[i][1] in users_icons){
-                        var userIcon = L.icon({iconUrl: './static/css/images/' + users_icons[this.registered_locations[i][1]],shadowUrl: '/static/css/images/marker-shadow.png',iconSize:[38, 40],shadowSize:[38, 40],});
-                        this.marker = L.marker([ this.registered_locations[i][4]['latitude'], this.registered_locations[i][4]['longitude']],
+                        // An icon is selected for the user
+                        var userIcon = L.icon({iconUrl: './static/css/images/' + users_icons[this.registered_locations[i][1]]['color_icon'],shadowUrl: '/static/css/images/marker-shadow.png',iconSize:[38, 40],shadowSize:[38, 40],});
+                        this.marker = L.marker([ this.registered_locations[i][4]['lat'], this.registered_locations[i][4]['lon']],
                         {icon: userIcon}).addTo(this.map);
+                        users_icons[this.registered_locations[i][1]]['coordinates'].push(this.marker.getLatLng())
                     }
+
+                    // Select an icon for the user
                     else{
-                        users_icons[this.registered_locations[i][1]] = remained_icons.pop();
-                        var userIcon = L.icon({iconUrl: './static/css/images/' + users_icons[this.registered_locations[i][1]],shadowUrl: '/static/css/images/marker-shadow.png',iconSize:[38, 40],shadowSize:[38, 40],});
+                        users_icons[this.registered_locations[i][1]] = {}
+                        users_icons[this.registered_locations[i][1]]['color_icon'] = remained_icons.pop();
+                        users_icons[this.registered_locations[i][1]]['coordinates'] = []
+                        //  Ex: users_icons['username'] = {'color_icon':icon, 'coordinates':[]}
+                        var userIcon = L.icon({iconUrl: './static/css/images/' + users_icons[this.registered_locations[i][1]]['color_icon'],shadowUrl: '/static/css/images/marker-shadow.png',iconSize:[38, 40],shadowSize:[38, 40],});
                         
-                        this.marker = L.marker([ this.registered_locations[i][4]['latitude'], this.registered_locations[i][4]['longitude']],
+                        this.marker = L.marker([ this.registered_locations[i][4]['lat'], this.registered_locations[i][4]['lon']],
                         {icon: userIcon}).addTo(this.map);
+                        users_icons[this.registered_locations[i][1]]['coordinates'].push(this.marker.getLatLng())
 
                     }
                     this.marker.bindPopup(
@@ -213,6 +255,9 @@ app_methods.showAllUsersLocationsOnMap = function(){
                     "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.registered_locations[i][3]['time'] + "</h6>"
                     );
                 }
+                for (const key in users_icons) {
+                    L.polyline(users_icons[key]['coordinates'], {color: this.getRandomColor()}).addTo(this.map);
+                };
             })
         }
         // Without registered location
@@ -248,7 +293,7 @@ app_methods.showUserAllLocations = function(user_uuid,check_selected_time){
                     this.map.off(); this.map.remove();
                 };
                 
-                this.map = L.map('user_all_locs_map').setView([this.userAllLocations[0][2]['latitude'], this.userAllLocations[0][2]['longitude']], 14);
+                this.map = L.map('user_all_locs_map').setView([this.userAllLocations[0][2]['lat'], this.userAllLocations[0][2]['lon']], 14);
                 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                     maxZoom: 19,
@@ -259,8 +304,12 @@ app_methods.showUserAllLocations = function(user_uuid,check_selected_time){
                 iconSize:[38, 40],shadowSize:[38, 40],
                 });
             
+                // Define an array of LatLng points for the polyline
+                var latlngs = [];
 
-                this.marker = L.marker([this.userAllLocations[0][2]['latitude'], this.userAllLocations[0][2]['longitude']]).addTo(this.map);
+                this.marker = L.marker([this.userAllLocations[0][2]['lat'], this.userAllLocations[0][2]['lon']]).addTo(this.map);
+                latlngs.push(this.marker.getLatLng())
+
                 this.marker.bindPopup("<h6>آخرین موقعیت مکانی ثبت شده</h6>" +
                                 "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[0][3]['date'] + "</h6>" +
                                 "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[0][3]['time'] + "</h6>"
@@ -268,13 +317,17 @@ app_methods.showUserAllLocations = function(user_uuid,check_selected_time){
                             
                 if (this.userAllLocations.length != 1){
                     for (var i=1 ; i < this.userAllLocations.length;i++ ){
-                        this.marker = L.marker([ this.userAllLocations[i][2]['latitude'], this.userAllLocations[i][2]['longitude']], {icon: blueIcon}).addTo(this.map);
+                        this.marker = L.marker([ this.userAllLocations[i][2]['lat'], this.userAllLocations[i][2]['lon']], {icon: blueIcon}).addTo(this.map);
+                        latlngs.push(this.marker.getLatLng())
+
                         this.marker.bindPopup(
                         "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[i][3]['date'] + "</h6>" +
                         "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[i][3]['time'] + "</h6>"
                         );
                     }
-                }       
+                    // Create a polyline and add it to the map
+                    L.polyline(latlngs, {color: 'red'}).addTo(this.map);
+                }
             })
         }
         // Without registered location
@@ -297,21 +350,20 @@ app_methods.showUserAllLocations = function(user_uuid,check_selected_time){
 }
 
 
-
-app_methods.showLocation = function(longitude,latitude){
+app_methods.showLocation = function(lon,lat){
     if (this.show_location == 'true'){
         this.show_location = 'false';
     }
     else {
         this.show_location = 'true';
         this.$nextTick(() => {
-            var map = L.map('map').setView([latitude, longitude ], 14);
+            var map = L.map('map').setView([lat, lon ], 14);
             
             L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19,
             }).addTo(map);
-            L.marker([latitude, longitude]).addTo(map);
+            L.marker([lat, lon]).addTo(map);
         })
     }
 }
@@ -354,15 +406,26 @@ app_methods.handleExcelFile = function(event){
 }
 
 app_methods.sendUserInfoToAddToKaravan = function(type){
+
     if (type == 'input'){
-        data = {'fullname': this.fullname ,'username': this.username ,'karavan_uuid': this.selected_karavan_uuid}
+        if (this.fullname == '' || this.username == '' || this.password == ''){
+            Swal.fire({title:'خطا' ,text:'لطفا همه ی فیلد ها را پر کنید', icon:'error', confirmButtonText:'تایید'})
+            return;
+        }
+
+        data = {'fullname': this.fullname ,'username': this.username, 'password':this.password ,'karavan_uuid': this.selected_karavan_uuid}
         axios.post('/add-new-user-to-karavan', data).then(response => {  
         if (response.data['status-code'] == 201){
             this.getKaravanUsersInfo(1)
             Swal.fire({title:'موفقیت آمیز' ,text:'کاربر با موفقیت اضافه شد', icon:'success', confirmButtonText:'تایید'})
         }
         else if (response.data['result'] == 'no_valid_fullname') {Swal.fire({title:'خطا' ,text:'نام و نام خانوادگی را فقط به فارسی وارد کنید', icon:'error', confirmButtonText:'تایید'})}
-    
+        else if (response.data['result'] == 'empty_fullname') {Swal.fire({title:'خطا' ,text:'لطفا نام و نام خانوادگی خود را وارد کنید', icon:'error', confirmButtonText:'تایید'})}
+
+        else if (response.data['result'] == 'empty_password') {Swal.fire({title:'خطا' ,text:'لطفا یک رمز عبور انتخاب کنید', icon:'error', confirmButtonText:'تایید'})}
+        else if (response.data['result'] == 'char_password') {Swal.fire({title:'خطا' ,text:'طول رمز عبور باید بیشتر از 8 کاراکتر و فقط شامل حرف کوچک انگلیسی و کاراکتر خاص و عدد باشد', icon:'error', confirmButtonText:'تایید'})}
+        else if (response.data['result'] == 'used_info_in_password') {Swal.fire({title:'خطا' ,text:'رمز عبور شما مطابقت زیادی با ایمیل یا نام کاربری تان دارد. لطفا رمز عبور دیگری را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})}
+        
         else if (response.data['result'] == 'empty_username') {Swal.fire({title:'خطا' ,text:'لطفا یک نام کاربری انتخاب کنید', icon:'error', confirmButtonText:'تایید'})}
         else if (response.data['result'] == 'duplicate_username' ) {Swal.fire({title:'خطا' ,text:'نام کاربری وارد شده از قبل در سیستم وجود دارد. لطفا نام کاربری دیگری را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})}
         else if (response.data['result'] == 'length_username') {Swal.fire({title:'خطا' ,text:'طول نام کاربری باید بین 3 تا 20 کاراکتر باشد', icon:'error', confirmButtonText:'تایید'})}
@@ -389,21 +452,15 @@ app_methods.sendUserInfoToAddToKaravan = function(type){
             fd.append('karavan_uuid', this.selected_karavan_uuid)
     
             axios.post('/add-new-user-to-karavan', fd).then(response => {
-
-                if (response.data['status-code'] == 201){
-                    this.getKaravanUsersInfo(1)
-                    Swal.fire({title:'موفقیت آمیز' ,text:'کاربران با موفقیت اضافه شدند', icon:'success', confirmButtonText:'تایید'})
+                if (response.data['status-code'] == 422){
+                    Swal.fire({title:'نامعتبر' ,text:'لطفا فایل نمونه را مشاهده و طبق آن اطلاعات را ارسال کنید', icon:'error', confirmButtonText:'تایید'})
+                    return
                 }
-                else if (response.data['result'] == 'no_valid_fullname') {Swal.fire({title:'خطا' ,text:'همه اعضا باید نام و نام خانوادگی و به فارسی داشته باشند' , icon:'error', confirmButtonText:'تایید'})}
-            
-                else if (response.data['result'] == 'empty_username') {Swal.fire({title:'خطا' ,text:'همه اعضا باید نام کاربری داشته باشند', icon:'error', confirmButtonText:'تایید'})}
-                else if (response.data['result'] == 'duplicate_username' ) {Swal.fire({title:'خطا' ,text:'نام کاربری ' + response.data['username'] + ' از قبل در سیستم وجود دارد ', icon:'error', confirmButtonText:'تایید'})}
-                else if (response.data['result'] == 'length_username') {Swal.fire({title:'خطا' ,text:'نام کاربری ' + response.data['username'] + ' معتبر نمی باشد. نام کاربری باید بین 3 تا 20 کاراکتر باشد ' , icon:'error', confirmButtonText:'تایید'})}
-                else if (response.data['result'] == 'char_username') {Swal.fire({title:'خطا' ,text:'نام کاربری ' + response.data['username'] + ' معتبر نیست.نام کاربری فقط می تواند شامل حروف کوچک و بزرگ انگلیسی و اعداد و نقطه و زیرخط(آندرلاین) باشد', icon:'error', confirmButtonText:'تایید'})}
-            
-                else{ Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'}) }
+                Swal.fire({title:'توجه' ,text:'نتیجه ثبت نام را در نتیجه ارسال فایل می توانید مشاهده کنید', icon:'info', confirmButtonText:'تایید'})
+                this.res_upload_excel_href = response.data['path_result_excel']
+                this.show_res_upload_excel = true;
                 })
-            }
+        }
     }
 }
 
@@ -452,12 +509,14 @@ app_methods.getKaravansName = function(){
 
 // Signin
 app_methods.signinManager = function(){
+
     var data = {
         'username':this.username,
         'password':this.password,
     }
     axios.post('/signin-manager', data).then(response => {         
         if (response.data['status-code'] == 200) { 
+            this.static_fullname = response.data['fullname'];
             this.getKaravansName();
         }        
         else {            
@@ -471,11 +530,12 @@ app_methods.signinManager = function(){
 
 // Signup
 app_methods.signupManager = function(){
-    var data = {
-        'fullname' : this.fullname,
-        'username' : this.username,
-        'password' : this.password,
-    }    
+    if (this.fullname == '' || this.username == '' || this.password ==''){
+        Swal.fire({title:'خطا' ,text:'لطفا همه ی فیلد ها را پر کنید', icon:'error', confirmButtonText:'تایید'})
+        return;
+    }
+    var data = {'fullname' : this.fullname,'username' : this.username,'password' : this.password,}    
+
     axios.post('/signup-manager', data).then(response => {  
         if (response.data['status-code'] == 201) { 
             //  Signup was succesful
@@ -483,12 +543,13 @@ app_methods.signupManager = function(){
             this.change_panel('sign-in',null)
         }        
         else if (response.data['result'] == 'no_valid_fullname') {Swal.fire({title:'خطا' ,text:'نام و نام خانوادگی خود را فقط به فارسی وارد کنید', icon:'error', confirmButtonText:'تایید'})}
+        else if (response.data['result'] == 'empty_fullname') {Swal.fire({title:'خطا' ,text:'همه باید نام و نام خانوادگی شان ثبت شده باشد', icon:'error', confirmButtonText:'تایید'})}
 
-        else if (response.data['result'] == 'password_length') {Swal.fire({title:'خطا' ,text:'رمز عبور باید شامل حروف انگلیسی و حداقل شامل 8 کاراکتر باشد', icon:'error', confirmButtonText:'تایید'})}
-        else if (response.data['result'] == 'empty_password') {Swal.fire({title:'خطا' ,text:'لطفا یک رمز عبور برای خودتان انتخاب کنید', icon:'error', confirmButtonText:'تایید'})}
+        else if (response.data['result'] == 'empty_password') {Swal.fire({title:'خطا' ,text:'همه باید رمز عبور داشته باشند', icon:'error', confirmButtonText:'تایید'})}
+        else if (response.data['result'] == 'char_password') {Swal.fire({title:'خطا' ,text:'طول رمز عبور باید بیشتر از 8 کاراکتر و فقط شامل حرف کوچک انگلیسی و کاراکتر خاص و عدد باشد', icon:'error', confirmButtonText:'تایید'})}
         else if (response.data['result'] == 'used_info_in_password') {Swal.fire({title:'خطا' ,text:'رمز عبور شما مطابقت زیادی با نام کاربری تان دارد. لطفا رمز عبور دیگری را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})}
         
-        else if (response.data['result'] == 'empty_username') {Swal.fire({title:'خطا' ,text:'لطفا یک نام کاربری برای خودتان انتخاب کنید', icon:'error', confirmButtonText:'تایید'})}
+        else if (response.data['result'] == 'empty_username') {Swal.fire({title:'خطا' ,text:'همه اعضا باید نام کاربری داشته باشند', icon:'error', confirmButtonText:'تایید'})}
         else if (response.data['result'] == 'duplicate_username' ) {Swal.fire({title:'خطا' ,text:'نام کاربری وارد شده از قبل در سیستم وجود دارد. لطفا نام کاربری دیگری را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})}
         else if (response.data['result'] == 'length_username') {Swal.fire({title:'خطا' ,text:'طول نام کاربری شما باید بین 3 تا 20 کاراکتر باشد', icon:'error', confirmButtonText:'تایید'})}
         else if (response.data['result'] == 'char_username') {Swal.fire({title:'خطا' ,text:'نام کاربری فقط می تواند شامل حروف کوچک و بزرگ انگلیسی و اعداد و نقطه و زیرخط(آندرلاین) باشد', icon:'error', confirmButtonText:'تایید'})}
@@ -501,16 +562,21 @@ Vue.createApp({
     data(){ return {        
         panel: 'sign-in',
         manager_panel: '',
-        
 
         manager_karavans_info: '',
         users_info:'' ,
 
-        //  Sign in/up manager Info
+        //  Sign in/up Info
         username: '',
         password: '',
         fullname: '',
 
+        // Signin manager
+        static_fullname: '',
+
+        // Handle user to edit info
+        current_user_uuid: null,
+        current_user_fullname: null,
 
         // search-bar
         search_bar_val: null,
@@ -540,6 +606,9 @@ Vue.createApp({
         userAllLocations: '',
 
         UsersExcelFile: '',
+
+        show_res_upload_excel: false,
+        res_upload_excel_href: '',
 
         map_icons_name:[
                         'pink2.png', 'purple.png', 'brown.png', 

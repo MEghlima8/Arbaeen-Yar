@@ -12,10 +12,11 @@ CREATE TABLE users (
     password VARCHAR (255),
     is_manager VARCHAR (50),
     is_user VARCHAR(50) ,
-    active VARCHAR(50) ,
+    active JSONB ,
     step VARCHAR (255) ,
     first_msg VARCHAR(255) ,
-    second_msg VARCHAR(255)
+    second_msg VARCHAR(255) ,
+    last_activity JSONB
 );
     
 
