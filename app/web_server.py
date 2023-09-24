@@ -47,7 +47,6 @@ def edit_user_info():
     return resp
         
 
-
 @app.route('/add-new-user-to-karavan', methods=['POST'])    
 def add_new_user_to_karavan():
     try:
@@ -128,6 +127,27 @@ def add_new_karavan():
     else:
         resp = {"result": "Invalid name", "status-code":400}
     return resp
+
+@app.route('/get-karavan-general-info', methods= ['POST'])
+def get_karavan_general_info():
+    karavan_uuid = request.get_json()['karavan_uuid']
+    res = web_process.get_karavan_general_info(karavan_uuid)    
+    return res
+    
+
+@app.route('/change-account-status', methods=['POST'])
+def change_account_status():
+    j_body_data = request.get_json()
+    user_uuid = j_body_data['user_uuid']
+    new_status = j_body_data['new_status']
+    db.db.changeAccountStatus(user_uuid, new_status)
+    
+    res = db.db.getAllKaravanUsersInfo(j_body_data['karavan_uuid'], None)
+    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
+    result = {"status-code":200 , "result":page_items, 
+              "count_pages":count_all_pages, "active_page":count_all_pages}
+    return result
+    
 
 
 @app.route('/get-karavans-name', methods=['POST'])

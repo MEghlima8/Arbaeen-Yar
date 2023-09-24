@@ -14,7 +14,7 @@ app_methods.showSearchBar = function(open){
     }
 }
 
-app_methods.change_panel = function(panel,manager_panel,change_section=false){
+app_methods.change_panel = function(panel,manager_panel){
     this.search_bar_val = '',
     this.username = '';
     this.password = '';
@@ -54,8 +54,8 @@ app_methods.onClick_searchBarAdvs = function(){
     if (this.search_bar_val != null){
         this.pages = null;
     
-        if (this.manager_panel == 'manager-dashboard') {
-            this.getKaravanUsersInfo(1)
+        if (this.manager_panel == 'show-all-users-info') {
+            this.showAllUsersInfo(1)
         }
         else if (this.manager_panel == 'souvenir-photos'){
             this.getSouvenirPhotos(1);
@@ -152,8 +152,11 @@ app_methods.getRegisteredLocations = function(page){
 }   
 
 
-app_methods.getKaravanUsersInfo = function(page){
-    if (this.selected_karavan_uuid == ''){return;}
+app_methods.showAllUsersInfo = function(page){
+    if (this.selected_karavan_uuid == ''){
+        Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
+        return;
+    }
     this.activeIndexPage = page;
     
     data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'search_value':this.search_bar_val}
@@ -162,7 +165,7 @@ app_methods.getKaravanUsersInfo = function(page){
         if (response.data['status-code'] == 200) {
             this.users_info = response.data['result']
             this.pages = response.data['count_pages']
-            this.change_panel('manager', 'manager-dashboard')
+            this.change_panel('manager', 'show-all-users-info')
             }
         else {
             Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'})
@@ -188,7 +191,7 @@ app_methods.editUserInfo = function(){
 
         if (response.data['status-code'] == 200){
             Swal.fire({title:'موفق' ,text:'تغییر اطلاعات با موفقیت انجام شد', icon:'success', confirmButtonText:'تایید'});
-            this.getKaravanUsersInfo(1);
+            this.showAllUsersInfo(1);
         }
         else if (response.data['result'] == 'no_valid_fullname') {Swal.fire({title:'خطا' ,text:'نام و نام خانوادگی را فقط به فارسی وارد کنید', icon:'error', confirmButtonText:'تایید'})}
     
@@ -369,29 +372,6 @@ app_methods.showLocation = function(lon,lat){
 }
 
 
-app_methods.changeSelectedKaravan = function(){
-
-    if (this.selected_karavan_uuid == ''){
-        this.users_info = null;
-        return
-    } 
-    switch (this.manager_panel){
-        case 'manager-dashboard':
-            this.getKaravanUsersInfo(1);  
-            break;  
-            
-        case 'souvenir-photos':
-            this.getSouvenirPhotos(1);
-            break;
-            
-        case 'registered-locations':
-            this.show_all_users_locations_on_map = false;
-            this.getRegisteredLocations(1);
-            break;
-        }
-        
-}
-
 
 app_methods.addUserToKaravan = function(){
     if (this.selected_karavan_uuid == ''){
@@ -416,7 +396,7 @@ app_methods.sendUserInfoToAddToKaravan = function(type){
         data = {'fullname': this.fullname ,'username': this.username, 'password':this.password ,'karavan_uuid': this.selected_karavan_uuid}
         axios.post('/add-new-user-to-karavan', data).then(response => {  
         if (response.data['status-code'] == 201){
-            this.getKaravanUsersInfo(1)
+            this.showAllUsersInfo(1)
             Swal.fire({title:'موفقیت آمیز' ,text:'کاربر با موفقیت اضافه شد', icon:'success', confirmButtonText:'تایید'})
         }
         else if (response.data['result'] == 'no_valid_fullname') {Swal.fire({title:'خطا' ,text:'نام و نام خانوادگی را فقط به فارسی وارد کنید', icon:'error', confirmButtonText:'تایید'})}
@@ -557,6 +537,66 @@ app_methods.signupManager = function(){
     })
 };
 
+app_methods.getKaravanGeneralInfo = function(){
+    if (this.selected_karavan_uuid == ''){
+        this.show_karavan_info = false;
+        return
+    }
+    data = {'karavan_uuid': this.selected_karavan_uuid}
+    axios.post('/get-karavan-general-info', data).then(response => {
+        
+        if (response.data['status-code'] == 200){
+
+            this.count_karavan_locations = response.data['type']['/send-my-location']
+            this.count_karavan_souvenir_photos = response.data['type']['/souvenir-photo']
+            this.count_karavan_active_accounts = response.data['account']['active']
+            this.count_karavan_no_active_accounts = response.data['account']['noactive']
+            this.getMorris();
+        }
+    });  
+}
+
+
+app_methods.changeUserAccountStatus = function(user_uuid, new_status){
+    data = {'user_uuid':user_uuid, 'new_status':new_status, 
+            'karavan_uuid':this.selected_karavan_uuid, 'page_index':this.activeIndexPage}
+
+    axios.post('/change-account-status', data).then(response => {
+        if (response.data['status-code'] == 200){
+            Swal.fire({title:'موفق' ,text:'وضعیت حساب کاربر با موفقیت تغییر کرد', icon:'success', confirmButtonText:'تایید'})
+            this.users_info = response.data['result']
+            this.pages = response.data['count_pages']
+        }
+    })
+}
+
+app_methods.getMorris = function () {
+    $("#donut_chart").empty();
+    
+    this.change_panel('manager', 'manager-dashboard')
+    this.show_karavan_info = true
+    this.$nextTick(() => {
+        
+        Morris.Donut({
+            element: 'donut_chart',
+            data: [
+                {
+                    label: 'حساب های فعال',
+                    value: this.count_karavan_active_accounts
+                },
+                {
+                    label: 'حساب های غیرفعال',
+                    value: this.count_karavan_no_active_accounts
+                },
+            ],
+            colors: ['rgb(0, 188, 212)', 'rgb(233, 30, 99)'],
+            formatter: function (y) {
+                return y + ' حساب '
+            },
+        });
+    });   
+}
+
 
 Vue.createApp({
     data(){ return {        
@@ -565,6 +605,8 @@ Vue.createApp({
 
         manager_karavans_info: '',
         users_info:'' ,
+        karavan_name: '',
+        show_karavan_info: false,
 
         //  Sign in/up Info
         username: '',
@@ -609,6 +651,12 @@ Vue.createApp({
 
         show_res_upload_excel: false,
         res_upload_excel_href: '',
+
+        // Information for dashboard panel
+        count_karavan_souvenir_photos: 0,
+        count_karavan_locations: 0,
+        count_karavan_active_accounts: 0,
+        count_karavan_no_active_accounts: 0,
 
         map_icons_name:[
                         'pink2.png', 'purple.png', 'brown.png', 

@@ -81,9 +81,6 @@ Licensed under the BSD-2-Clause License.
       } else {
         this.el = $(options.element);
       }
-      if ((this.el == null) || this.el.length === 0) {
-        throw new Error("Graph container element not found");
-      }
       if (this.el.css('position') === 'static') {
         this.el.css('position', 'relative');
       }
@@ -1652,9 +1649,6 @@ Licensed under the BSD-2-Clause License.
       } else {
         this.el = $(options.element);
       }
-      if (this.el === null || this.el.length === 0) {
-        throw new Error("Graph placeholder not found.");
-      }
       if (options.data === void 0 || options.data.length === 0) {
         return;
       }
@@ -1755,12 +1749,18 @@ Licensed under the BSD-2-Clause License.
       maxWidth = 1.8 * inner;
       maxHeightTop = inner / 2;
       maxHeightBottom = inner / 3;
+
       this.text1.attr({
         text: label1,
         transform: ''
       });
       text1bbox = this.text1.getBBox();
-      text1scale = Math.min(maxWidth / text1bbox.width, maxHeightTop / text1bbox.height);
+      text1scale = 1
+      text1bbox.x = 20
+      text1bbox.width = 200
+      text1bbox.y = 155
+      text1bbox.height = 17
+
       this.text1.attr({
         transform: "S" + text1scale + "," + text1scale + "," + (text1bbox.x + text1bbox.width / 2) + "," + (text1bbox.y + text1bbox.height)
       });
@@ -1769,7 +1769,11 @@ Licensed under the BSD-2-Clause License.
         transform: ''
       });
       text2bbox = this.text2.getBBox();
-      text2scale = Math.min(maxWidth / text2bbox.width, maxHeightBottom / text2bbox.height);
+      text2scale = 1
+      text2bbox.x = 20
+      text2bbox.width = 200
+      text2bbox.y = 155
+
       return this.text2.attr({
         transform: "S" + text2scale + "," + text2scale + "," + (text2bbox.x + text2bbox.width / 2) + "," + text2bbox.y
       });

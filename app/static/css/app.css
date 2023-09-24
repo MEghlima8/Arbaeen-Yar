@@ -9,7 +9,7 @@
 
 
 #map {     
-  height: 250px; 
+  height: 230px; 
   width: 270px;
   margin-right: 4.8%;
   border: dashed;
@@ -105,3 +105,7 @@
 }
 
 .pagination a:hover:not(.active) {background-color: #ddd;}
+
+#donut_chart svg{
+  overflow: visible !important;
+}

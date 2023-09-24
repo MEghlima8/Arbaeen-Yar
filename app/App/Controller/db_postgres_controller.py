@@ -91,6 +91,20 @@ class PostgreSQL:
         return text
 
 
+    def countKaravanUsersAccountStatus(self, karavan_uuid):
+        query = """SELECT users.active->>'status', COUNT(*) AS count FROM users
+                    INNER JOIN karavan_users ON users.uuid = karavan_users.user_uuid
+                    WHERE is_user = 'true' AND karavan_users.karavan_uuid = %s GROUP BY users.active->>'status';"""    
+        args = (karavan_uuid,)
+        res = self.execute_query(query,args).fetchall()
+        return res
+    
+    def countKaravanReqsType(self, karavan_uuid):
+        query = """SELECT type, COUNT(*) AS count FROM request
+                    WHERE status = 'done' GROUP BY type;"""    
+        args = (karavan_uuid,)
+        res = self.execute_query(query,args).fetchall()
+        return res
 
 # Add user to karavan_users table
     def addUserToKaravanUsers(self, karavan_users_uuid, user_uuid, karavan_uuid, whois):
@@ -317,6 +331,16 @@ class PostgreSQL:
             
         res = self.execute_query(query,args).fetchall()
         return res
+
+
+    def changeAccountStatus(self, user_uuid, new_status):
+        col = '{status}'
+        value = f'"{new_status}"'
+        query = f"UPDATE users SET active = JSONB_SET(active, '{col}', '{value}') WHERE uuid = %s"
+        args = (user_uuid,)
+        
+        self.execute_query(query, args)
+        return 'done'
 
 db = PostgreSQL(host=host, database=database, user=user, password=password, port=port)
 db.connect()
