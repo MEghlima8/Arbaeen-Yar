@@ -20,17 +20,11 @@ keyboard_start_user = [
 reply_markup_start_user = InlineKeyboardMarkup(keyboard_start_user)
 
 
-keyboard_photo_event = [
-    [
-        InlineKeyboardButton("محرم", callback_data="moharram"),
-        InlineKeyboardButton("اربعین", callback_data="arbaeen")
-    ],
-    [
-        InlineKeyboardButton("عید غدیر", callback_data="ghadir"),
-        InlineKeyboardButton("عید فطر", callback_data="fetr")
-    ],
-    [InlineKeyboardButton("سایر", callback_data="other")]
+def keyboard_photo_events(events):
+    inline_events = []
+    for event in events:
+        inline_events.append([ InlineKeyboardButton(event, callback_data=events[event]) ])
 
-]
-reply_markup_photo_event = InlineKeyboardMarkup(keyboard_photo_event)
+    reply_markup_photo_event = InlineKeyboardMarkup(inline_events)
+    return reply_markup_photo_event
 

@@ -164,37 +164,11 @@
         <!-- manager panel -->
         <div v-show="panel == 'manager'">
 
-            <!-- Search Bar -->
-            <div class="search-bar">
-                <div @click.prevent="onClick_searchBarAdvs()" class="search-icon">
-                    <i class="material-icons">search</i>
-                </div>
-                <input @keyup.esc="showSearchBar(false)" @keyup.enter="onClick_searchBarAdvs()" v-model="search_bar_val" type="text" placeholder="جستجو بر اساس نام و نام کاربری ...">
-                <div @click.prevent="showSearchBar(false)" class="close-search">
-                    <i class="material-icons">close</i>
-                </div>
-            </div>
-            <!-- #END# Search Bar -->
-
             <!-- Top Bar -->
             <nav class="navbar">
                 <div class="container-fluid">
                     <div class="navbar-header">
                         <b> <a class="navbar-brand" href="#">اربعین یار</a> </b>
-                    </div>
-                    <div class="collapse navbar-collapse" id="navbar-collapse">
-                        <ul class="nav navbar-nav navbar-left">
-                            <!-- Call Search -->
-                            <li v-if="selected_karavan_uuid != '' && manager_panel != 'user-all-locations' && 
-                                    show_all_users_locations_on_map == false && show_all_users_souvenir_album != true && 
-                                    manager_panel != 'add-user-to-karavan' && manager_panel != 'edit-user-info' 
-                                    && manager_panel != 'manager-dashboard'">
-                                <a @click.prevent="showSearchBar(true)" href="#">
-                                    <i class="material-icons">search</i>
-                                </a>
-                            </li>
-                            <!-- #END# Call Search -->
-                        </ul>
                     </div>
                 </div>
             </nav>
@@ -226,7 +200,7 @@
                             <li :class="{ active: isActivePanel('show-all-users-info') }" style="border-bottom:inset;">
                                 <a @click.prevent="showAllUsersInfo(1)" href="#">
                                     <i class="material-icons">list_alt</i>
-                                    <span>اطلاعات اعضای کاروان</span>
+                                    <span>مدیریت کاروان</span>
                                 </a>
                             </li>
                             <li style="border-bottom:inset;">
@@ -266,24 +240,25 @@
             <!-- Manager dashboard -->
             <section v-if="manager_panel == 'manager-dashboard'" class="content">
                 <div class="container-fluid">
+
+                    <div class="col-sm-3" style="margin-top:-15px; margin-bottom:10px;">
+                        <label for="category">کاروان مورد نظر را انتخاب کنید</label>
+                        <select class="form-control" v-model="selected_karavan_uuid" @change="changeSelectedKaravan">
+                            <option value="">انتخاب کاروان</option>
+                            <option v-for="karavan in manager_karavans_info" :value=karavan[0] >${karavan[1]}$</option>
+                        </select>
+                    </div>
+                    
                     <!-- Basic Examples -->
-                    <div class="row clearfix">
+                    <div v-show="selected_karavan_uuid !=''" class="row clearfix">
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                             <div class="card">
+
                                 <div class="header">
-                                    </br>
-                                    <div class="col-sm-3">
-                                        <label for="category">کاروان مورد نظر را انتخاب کنید</label>
-                                        <select class="form-control" v-model="selected_karavan_uuid" @change="getKaravanGeneralInfo">
-                                            <option value="">انتخاب کاروان</option>
-                                            <option v-for="karavan in manager_karavans_info" :value=karavan[0] >${karavan[1]}$</option>
-                                        </select>
-                                    </div>
-                                    </br>
-                                    </br>
-                                    </br>
+                                    <h4>آمار کاروان</h4>
                                 </div>
-                                <div v-show="show_karavan_info == true" class="body" style="height: 600px;">
+
+                                <div class="body" style="height: 500px;">
                                     <div class="col-md-1"></div>
                                     
                                     <div class="col-md-4 info-box bg-green hover-zoom-effect">
@@ -327,27 +302,38 @@
             <!-- Show all users info -->
             <section v-if="manager_panel == 'show-all-users-info'" class="content">
                 <div class="container-fluid">
+
+                    <div class="col-sm-3" style="margin-top:-15px; margin-bottom:10px;">
+                        <label for="category">کاروان مورد نظر را انتخاب کنید</label>
+                        <select class="form-control" v-model="selected_karavan_uuid" @change="changeSelectedKaravan">
+                            <option value="">انتخاب کاروان</option>
+                            <option v-for="karavan in manager_karavans_info" :value=karavan[0] >${karavan[1]}$</option>
+                        </select>
+                    </div>
+
                     <!-- Basic Examples -->
-                    <div class="row clearfix">
+                    <div v-if="selected_karavan_uuid !=''" class="row clearfix">
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                             <div class="card">
-                                <div class="header">
-                                    <h3>
-                                        اطلاعات اعضا 
+                                <div class="header col-sm-12" style="margin-bottom: 20px;">
+                                    <h3 class="col-sm-8">
+                                        مدیریت کاروان
                                     </h3>
+                                    <div class="col-md-4">
+
+                                        <div class="input-group">
+                                            <div class="form-line">
+                                                <input @keyup.enter="onClick_search()" type="text" class="form-control date" v-model="search_bar_val" placeholder="جستجو براساس نام یا نام کاربری ...">
+                                            </div>
+                                            <span @click.prevent="onClick_search()" class="input-group-addon">
+                                                <i class="material-icons" style="font-size:25px;">search</i>
+                                            </span>
+                                        </div>
+
+                                        <button @click.prevent="addEventToKaravan()" style="padding:3px 25px; float:left;" type="button" class="btn bg-blue waves-effect">افزودن رویداد</button>
+                                    </div>
                                 </div>
                                 <div class="body">
-
-                                    <div class= "col-md-4">
-                                        <i class="material-icons" style="vertical-align: middle;">person_off</i> : مدیر کاروان این حساب را غیرفعال کرده است
-                                    </div>
-                                    <div class= "col-md-3">
-                                        <i class="material-icons" style="vertical-align: middle;">done</i> : حساب فعال است
-                                    </div>
-                                    <div class= "col-md-4">
-                                        <i class="material-icons" style="vertical-align: middle;">close</i>
-                                        <span>: حساب تا به حال فعال نشده است</span>
-                                    </div>
 
                                     <div class="table-responsive">
                                         <table id="users_info_table" class="table table-bordered table-striped table-hover js-basic-example dataTable" style="width:100%">
@@ -371,36 +357,33 @@
                                                     <td v-if="user[5]['status'] == 'true'">
                                                         <div class="switch">
                                                             <label>
-                                                                <i class="material-icons">done</i>
                                                                 <input @change="changeUserAccountStatus(user[0],'disable')" type="checkbox" checked>
-                                                                <span class="lever" style="margin-top: -11px;"></span>
-                                                                <i class="material-icons">person_off</i>
+                                                                <span data-toggle="tooltip" title="حساب فعال است" class="lever"></span>
                                                             </label>
                                                         </div>
                                                     </td>
                                                     <td v-else-if="user[5]['status'] == 'false'">
                                                         <div class="switch">
                                                             <label>
-                                                                <i class="material-icons">done</i>
                                                                 <input type="checkbox" disabled>
-                                                                <span style="background-color: #8b969f; margin-top: -11px;" class="lever"></span>
-                                                                <i class="material-icons">close</i>
+                                                                <span data-toggle="tooltip" title="حساب تا به حال فعال نشده است" style="background-color: #8b969f;" class="lever"></span>
                                                             </label>
                                                         </div>
                                                     </td>
                                                     <td v-else>
                                                         <div class="switch">
                                                             <label>
-                                                                <i class="material-icons">done</i>
                                                                 <input @change="changeUserAccountStatus(user[0],'true')" type="checkbox">
-                                                                <span class="lever" style="margin-top: -11px;"></span>
-                                                                <i class="material-icons">person_off</i>
+                                                                <span data-toggle="tooltip" title="مدیر کاروان این حساب را غیرفعال کرده است"  class="lever1 lever" style="background-color: #8b969f"></span>
                                                             </label>
                                                         </div>
                                                     </td>
 
 
-                                                    <td v-if="user[5]['status'] != 'false'">${ user[5]['time'] }$ | ${ user[5]['date'] }$</td>
+                                                    <td v-if="user[5]['status'] != 'false'">
+                                                        <i class="material-icons" style="vertical-align: middle;">done</i>
+                                                        ${ user[5]['time'] }$ | ${ user[5]['date'] }$
+                                                    </td>
                                                     <td v-else>-</td>
 
                                                     <td v-if="user[6] == null">بدون فعالیت</td>
@@ -432,10 +415,10 @@
             <!-- #END# show all users info -->
 
 
-
             <!-- Edit user info -->
             <section v-show="manager_panel == 'edit-user-info'" class="content">
                 <div class="container-fluid">
+
                     <div class="row clearfix">
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                             <div class="card">
@@ -490,25 +473,56 @@
             <!-- Manager show souvenir photos -->
             <section v-show="manager_panel == 'souvenir-photos'" class="content">
                 <div class="container-fluid">
+
+                    <div v-if="manager_panel == 'souvenir-photos'" class="col-sm-3" style="margin-top:-15px; margin-bottom:10px;">
+                        <label for="category">کاروان مورد نظر را انتخاب کنید</label>
+                        <select class="form-control" v-model="selected_karavan_uuid" @change="changeSelectedKaravan">
+                            <option value="">انتخاب کاروان</option>
+                            <option v-for="karavan in manager_karavans_info" :value=karavan[0] >${karavan[1]}$</option>
+                        </select>
+                    </div>
+
                     <!-- Basic Examples -->
-                    <div class="row clearfix">
+                    <div v-if="selected_karavan_uuid !=''" class="row clearfix">
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                             <div class="card">
                                 
-                                <div v-if="manager_panel == 'souvenir-photos'" class="header">
-                                    <h3>
-                                        عکس های یادگاری
-                                    </h3>
-                                    <div class="col-sm-6"></div>
+                                <div v-if="manager_panel == 'souvenir-photos'" class="header" style="padding-bottom: 170px;">
+                                    <div class=" col-sm-12" style="margin-bottom: 20px;">
+                                        <h3 class="col-sm-8">
+                                            عکس های یادگاری
+                                        </h3>
+                                        <div class="col-md-4" style="margin-top: 10px;">
+    
+                                            <div class="input-group">
+                                                <div class="form-line">
+                                                    <input @keyup.enter="onClick_search()" type="text" class="form-control date" v-model="search_bar_val" placeholder="جستجو براساس نام یا نام کاربری ...">
+                                                </div>
+                                                <span @click.prevent="onClick_search()" class="input-group-addon">
+                                                    <i class="material-icons" style="font-size:25px;">search</i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-6">
+                                        <!-- Switch Button -->
+                                        <div class="switch" style="padding-top:20px;">
+                                            <label>
+                                                <i class="material-icons">view_list</i>
+                                                <input @change="changePanelForAllUsersSouvenirPhotos" type="checkbox" checked>
+                                                <span style="margin-top:-15px" class="lever"></span>
+                                                <i class="material-icons">photo_library</i>
+                                            </label>
+                                        </div>
+                                        <!--#END# Switch Button -->
+                                    </div>
+
                                     <div class="col-sm-3">
                                         <label for="category">فیلتر رویداد</label>
                                         <select class="form-control" v-model="selected_event" @change="getSouvenirPhotos(1)">
                                             <option value="all">همه</option>
-                                            <option value="arbaeen">اربعین</option>
-                                            <option value="moharram">محرم</option>
-                                            <option value="fetr">فطر</option>
-                                            <option value="ghadir">غدیر</option>
-                                            <option value="other">سایر رویدادها</option>
+                                            <option v-for="(event,index) in karavan_events" :value=karavan_events[index] >${index}$</option>
                                         </select>
                                     </div>
                                     <div class="col-sm-3">
@@ -523,16 +537,6 @@
                                         </select>
                                     </div>
 
-                                    <!-- Switch Button -->
-                                    <div class="switch" style="padding-top:20px;">
-                                        <label>
-                                            <i class="material-icons">view_list</i>
-                                            <input @change="changePanelForAllUsersSouvenirPhotos" type="checkbox" checked>
-                                            <span style="margin-top:-15px" class="lever"></span>
-                                            <i class="material-icons">photo_library</i>
-                                        </label>
-                                    </div>
-                                    <!--#END# Switch Button -->
                                 </div>
 
                                 <div class="body">
@@ -612,17 +616,51 @@
             <!-- Manager show all users locations -->
             <section v-if="manager_panel == 'registered-locations'" class="content">
                 <div class="container-fluid">
+
+                    <div class="col-sm-3" style="margin-top:-15px; margin-bottom:10px;">
+                        <label for="category">کاروان مورد نظر را انتخاب کنید</label>
+                        <select class="form-control" v-model="selected_karavan_uuid" @change="changeSelectedKaravan">
+                            <option value="">انتخاب کاروان</option>
+                            <option v-for="karavan in manager_karavans_info" :value=karavan[0] >${karavan[1]}$</option>
+                        </select>
+                    </div>
+
                     <!-- Basic Examples -->
-                    <div class="row clearfix">
+                    <div v-if="selected_karavan_uuid !=''" class="row clearfix">
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                             <div class="card">
                                 
-                                <div class="header">
-                                    <h3>
-                                        موقعیت های مکانی ثبت شده
-                                    </h3>
+                                <div class="header" style="padding-bottom: 170px;">
+                                    <div class=" col-sm-12" style="margin-bottom: 20px;">
+                                        <h3 class="col-sm-8">
+                                            موقعیت های مکانی ثبت شده
+                                        </h3>
+                                        <div class="col-md-4" style="margin-top: 10px;">
+    
+                                            <div class="input-group">
+                                                <div class="form-line">
+                                                    <input @keyup.enter="onClick_search()" type="text" class="form-control date" v-model="search_bar_val" placeholder="جستجو براساس نام یا نام کاربری ...">
+                                                </div>
+                                                <span @click.prevent="onClick_search()" class="input-group-addon">
+                                                    <i class="material-icons" style="font-size:25px;">search</i>
+                                                </span>
+                                            </div>
+    
+                                        </div>
+                                    </div>
 
-                                    <div class="col-sm-9"></div>
+                                    <div class="col-sm-9">
+                                        <!-- Switch Button -->
+                                        <div class="switch" style="padding-top:20px;">
+                                            <label @change="changePanelForAllUsersLocations">
+                                                <i class="material-icons">view_list</i>
+                                                <input type="checkbox" checked>
+                                                <span style="margin-top:-15px" class="lever"></span>
+                                                <i class="material-icons">location_on</i>
+                                            </label>
+                                        </div>
+                                        <!--#END# Switch Button -->
+                                    </div>
                                     <div class="col-sm-3">
                                         <label for="category">فیلتر زمان</label>
                                         <select class="form-control" v-model="selected_time" @change="getRegisteredLocations(1)">
@@ -633,17 +671,6 @@
                                             <option value="year">امسال</option>
                                         </select>
                                     </div>
-
-                                    <!-- Switch Button -->
-                                    <div class="switch" style="padding-top:20px;">
-                                        <label @change="changePanelForAllUsersLocations">
-                                            <i class="material-icons">view_list</i>
-                                            <input type="checkbox" checked>
-                                            <span style="margin-top:-15px" class="lever"></span>
-                                            <i class="material-icons">location_on</i>
-                                        </label>
-                                    </div>
-                                    <!--#END# Switch Button -->
 
                                 </div>
 
@@ -711,6 +738,7 @@
             <!-- Manager show user all locations -->
             <section v-if="manager_panel == 'user-all-locations'" class="content">
                 <div class="container-fluid">
+
                     <!-- Basic Examples -->
                     <div class="row clearfix">
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
@@ -763,71 +791,99 @@
             <!-- Add user to karavan -->
             <section v-show="manager_panel == 'add-user-to-karavan'" class="content">
                 <div class="container-fluid">
-                    <div class="row clearfix">
+
+                    <div v-if="manager_panel == 'add-user-to-karavan'" class="col-sm-3" style="margin-top:-15px; margin-bottom:10px;">
+                        <label for="category">کاروان مورد نظر را انتخاب کنید</label>
+                        <select class="form-control" v-model="selected_karavan_uuid" @change="changeSelectedKaravan">
+                            <option value="">انتخاب کاروان</option>
+                            <option v-for="karavan in manager_karavans_info" :value=karavan[0] >${karavan[1]}$</option>
+                        </select>
+                    </div>
+
+                    <div v-if="selected_karavan_uuid !=''" class="row clearfix">
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                            <div class="card" style="padding-bottom: 40px;">
+                            <div class="card">
 
                                 <div class="body">
 
-                                    <h4>وارد کردن دستی اطلاعات</h4>
-                                    </br>
-                                    <div class="row clearfix" style="margin-bottom: 150px;">
-                                        <div class="col-md-3">
-                                            <div class="input-group input-group-lg">
-                                                <span class="input-group-addon">
-                                                    <i class="material-icons">person</i>
-                                                </span>
-                                                <div class="form-line">
-                                                    <input v-model="fullname" type="text" class="form-control" placeholder="نام و نام خانوادگی">
+                                    <!-- Nav tabs -->
+                                    <ul class="nav nav-tabs" role="tablist">
+                                        <li role="presentation" class="active">
+                                            <a href="#home_with_icon_title" data-toggle="tab">
+                                                <i class="material-icons">edit</i> وارد کردن دستی اطلاعات
+                                            </a>
+                                        </li>
+                                        <li role="presentation">
+                                            <a href="#profile_with_icon_title" data-toggle="tab">
+                                                <i class="material-icons">attach_file</i> بارگذاری فایل اکسل
+                                            </a>
+                                        </li>
+                                    </ul>
+
+                                    <!-- Tab panes -->
+                                    <div class="tab-content" style="padding-top: 30px !important;">
+                                        <div role="tabpanel" class="tab-pane fade in active" id="home_with_icon_title">
+                                            <h4>وارد کردن دستی اطلاعات</h4>
+                                            </br>
+                                            <div class="row clearfix" style="margin-bottom: 150px;">
+                                                <div class="col-md-3">
+                                                    <div class="input-group input-group-lg">
+                                                        <span class="input-group-addon">
+                                                            <i class="material-icons">person</i>
+                                                        </span>
+                                                        <div class="form-line">
+                                                            <input v-model="fullname" type="text" class="form-control" placeholder="نام و نام خانوادگی">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group input-group-lg">
+                                                        <span class="input-group-addon">
+                                                            <i class="material-icons">account_circle</i>
+                                                        </span>
+                                                        <div class="form-line">
+                                                            <input v-model="username" type="text" class="form-control" placeholder="نام کاربری">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group input-group-lg">
+                                                        <span class="input-group-addon">
+                                                            <i class="material-icons">password</i>
+                                                        </span>
+                                                        <div class="form-line">
+                                                            <input v-model="password" type="password" class="form-control" placeholder="رمز عبور">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <button @click.prevent="sendUserInfoToAddToKaravan('input')" style="padding:5px 40px;" type="button" class="btn btn-success waves-effect">افزودن</button>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
-                                            <div class="input-group input-group-lg">
-                                                <span class="input-group-addon">
-                                                    <i class="material-icons">account_circle</i>
-                                                </span>
-                                                <div class="form-line">
-                                                    <input v-model="username" type="text" class="form-control" placeholder="نام کاربری">
-                                                </div>
+
+                                        <div style="padding-bottom: 40px;" role="tabpanel" class="tab-pane fade" id="profile_with_icon_title">
+                                            <h4>بارگذاری فایل اکسل</h4>
+                                            <div class="alert alert-warning" style="margin-bottom: 40px;">
+                                                <strong>توجه! </strong>نام کاربری در ستون اول و نام و نام خانوادگی در ستون دوم و رمز‌ عبور در ستون سوم قرار گیرد.   نمونه فایل :
+                                                <a href="../static/sample/users_info_sample.csv" download>
+                                                    <i style="vertical-align: middle;" class="material-icons">download</i>
+                                                </a>
                                             </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="input-group input-group-lg">
-                                                <span class="input-group-addon">
-                                                    <i class="material-icons">password</i>
-                                                </span>
-                                                <div class="form-line">
-                                                    <input v-model="password" type="password" class="form-control" placeholder="رمز عبور">
-                                                </div>
+        
+                                            <form action="">
+                                                <input style="margin-top:20px; margin-bottom:20px;" type="file" accept=".csv" @change="handleExcelFile">
+                                            </form>
+        
+                                            <div class="col-md-3" style="margin-right: -15px;">
+                                                <button @click.prevent="sendUserInfoToAddToKaravan('file')" style="padding:5px 40px;" type="button" class="btn btn-success waves-effect">ارسال فایل</button>
                                             </div>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <button @click.prevent="sendUserInfoToAddToKaravan('input')" style="padding:5px 40px;" type="button" class="btn btn-success waves-effect">افزودن</button>
+        
                                         </div>
                                     </div>
 
-                                    <h4>بارگذاری فایل اکسل</h4>
-                                    <div class="alert alert-warning">
-                                        <strong>توجه! </strong>نام کاربری در ستون اول و نام و نام خانوادگی در ستون دوم و رمز‌ عبور در ستون سوم قرار گیرد
-                                    </div>
 
-                                    <div style="margin-bottom: 65px;">
-                                        <span style="font-size: 18px;">فایل نمونه : </span>
-                                        <a href="../static/sample/users_info_sample.csv" download><i class="material-icons">download</i></a>
-                                    </div>
 
-                                    <form action="">
-                                        <input style="margin-top:20px; margin-bottom:20px;" type="file" accept=".csv" @change="handleExcelFile">
-                                    </form>
-
-                                    <div class="col-md-3" style="margin-right: -15px;">
-                                        <button @click.prevent="sendUserInfoToAddToKaravan('file')" style="padding:5px 40px;" type="button" class="btn btn-success waves-effect">ارسال فایل</button>
-                                    </div>
-
-                                    <span v-if="show_res_upload_excel" style="font-size: 18px;">نتیجه ارسال فایل : 
-                                        <a :href="res_upload_excel_href" download><i class="material-icons">download</i></a>
-                                    </span>
 
                                 </div>
                             </div>
@@ -886,6 +942,7 @@
     <script src="../static/scripts/admin.js"></script>    
     <script src="../static/scripts/sign-in.js"></script>
     <script src="../static/scripts/sign-up.js"></script>
+    <script src="../static/scripts/tooltips-popovers.js"></script>
     
     <!-- Sweet Alert -->
     <script type="text/javascript" src="../static/scripts/sweetalert2.all.min.js"></script>

@@ -109,3 +109,8 @@
 #donut_chart svg{
   overflow: visible !important;
 }
+
+
+.switch label .lever1:after {
+  background-color:#BDBDBD !important;
+}

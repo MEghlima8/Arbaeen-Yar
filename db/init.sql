@@ -25,6 +25,7 @@ CREATE TABLE karavan (
     uuid VARCHAR(255) PRIMARY KEY ,
     name VARCHAR(255) ,
     manager_uuid VARCHAR(255) ,
+    events JSONB ,
     FOREIGN KEY(manager_uuid) REFERENCES users(uuid)
 );
 

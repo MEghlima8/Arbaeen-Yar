@@ -24,7 +24,7 @@ def createNewKaravan(karavan_name, manager_username):
         return 'invalid'
     manager_uuid = db.db.getUserUUID(manager_username)
     karavan_uuid = uuid.uuid4().hex
-    db.db.createNewKaravan(karavan_uuid, karavan_name, manager_uuid)
+    db.db.createNewKaravan(karavan_uuid, karavan_name, manager_uuid, uuid.uuid4().hex)
     db.db.addUserToKaravanUsers(uuid.uuid4().hex, manager_uuid, karavan_uuid, 'manager')
     return 'true'
 
@@ -61,7 +61,6 @@ def handleResultByEvent(requests, event):
     
     for i in requests:
         try:
-            # [result.append(i) if i[4]['event'] == event ]
             if i[4]['event'] == event:
                 result.append(i)
         except:
@@ -102,7 +101,7 @@ def get_karavan_general_info(karavan_uuid):
         active = ('active',0)
     elif len(count_karavan_users_account_status) == 1 :
         
-        if count_karavan_users_account_status[0][0] == 'noactive':
+        if count_karavan_users_account_status[0][0] == 'false':
             noactive = count_karavan_users_account_status[0]
             active = ('active',0)
         else:
@@ -110,7 +109,7 @@ def get_karavan_general_info(karavan_uuid):
             noactive = ('noactive',0)
     else:
         
-        if count_karavan_users_account_status[0][0] == 'noactive':
+        if count_karavan_users_account_status[0][0] == 'false':
             noactive = count_karavan_users_account_status[0]
             active = count_karavan_users_account_status[1]
         else:
@@ -147,5 +146,19 @@ def get_karavan_general_info(karavan_uuid):
             },
         "status-code":200
         }
+    
+    return res
+
+
+def add_event_to_karavan(karavan_uuid, event_name):
+    check_event_name = db.db.checkDuplicateEventName(karavan_uuid, event_name)
+    
+    if check_event_name[0] == None or check_event_name == []:
+        # valid name
+        db.db.addEventToKaravan(karavan_uuid, event_name, uuid.uuid4().hex)
+        res = {"result":"Event added successfully" , "status-code":200}
+    else:
+        # duplicate
+        res = {"result":"duplicate name error" , "status-code":400}
     
     return res

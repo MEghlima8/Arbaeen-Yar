@@ -153,10 +153,17 @@ class PostgreSQL:
         res = self.execute_query(query,args).fetchone()[0]
         return res
     
+    def getKaravanEvents(self, karavan_uuid):
+        query = "SELECT events FROM karavan WHERE uuid=%s"
+        args = (karavan_uuid,)
+        res = self.execute_query(query,args).fetchall()
+        return res
+      
     
-    def createNewKaravan(self, uuid, karavan_name, manager_uuid):
-        query = "INSERT INTO karavan (uuid,name,manager_uuid) VALUES (%s, %s, %s)"
-        args = (uuid,karavan_name, manager_uuid)
+    def createNewKaravan(self, uuid, karavan_name, manager_uuid, no_event_random_uuid):
+        event = json.dumps({'بدون رویداد' : no_event_random_uuid})
+        query = "INSERT INTO karavan (uuid, name, manager_uuid, events) VALUES (%s, %s, %s, %s)"
+        args = (uuid,karavan_name, manager_uuid, event)
         self.execute_query(query, args)
         return 'true'
         
@@ -277,6 +284,20 @@ class PostgreSQL:
         res = self.execute_query(query,args).fetchone()
         return res
 
+
+    def checkDuplicateEventName(self, karavan_uuid, event_name):
+        query = "SELECT events->>%s FROM karavan WHERE uuid=%s"
+        args = (event_name, karavan_uuid)
+        res = self.execute_query(query,args).fetchone()
+        return res
+    
+    def addEventToKaravan(self, karavan_uuid, event_name, random_uuid):
+        x = f'{{"{event_name}": "{random_uuid}"}}'
+        query = f"""UPDATE karavan SET events = events || %s 
+                    WHERE uuid = %s;"""
+        args = (x, karavan_uuid)
+        self.execute_query(query,args)
+        return 'done'
 
     def getAllKaravanUsersInfo(self, karavan_uuid, search_value):
         if search_value == '' or search_value == None :

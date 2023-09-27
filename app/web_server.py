@@ -148,7 +148,13 @@ def change_account_status():
               "count_pages":count_all_pages, "active_page":count_all_pages}
     return result
     
-
+@app.route('/add-event-to-karavan', methods = ['POST'])
+def add_event_to_karavan():
+    j_body_data = request.get_json()
+    karavan_uuid = j_body_data['karavan_uuid']
+    event_name = j_body_data['event_name']
+    resp = web_process.add_event_to_karavan(karavan_uuid, event_name)
+    return resp
 
 @app.route('/get-karavans-name', methods=['POST'])
 def get_karavans_name():
@@ -178,12 +184,13 @@ def get_souvenir_photos():
     res = db.db.getKaravanRequestInfo(j_body_data['karavan_uuid'], '/souvenir-photo', j_body_data['search_value'])
     res = web_process.handleResultByTime(res,j_body_data['time'])
     res = web_process.handleResultByEvent(res,j_body_data['event'])
+    events = db.db.getKaravanEvents(j_body_data['karavan_uuid'])[0][0]
     
     page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
-    result = {"status-code":200 , "result":page_items,
+    result = {"status-code":200 , "result":page_items, "events":events ,
               "count_pages":count_all_pages, "active_page":j_body_data["karavan_uuid"]
               }
-    return result 
+    return result
 
 
 @app.route('/get-registered-locations', methods=['POST'])

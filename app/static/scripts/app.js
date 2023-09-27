@@ -50,7 +50,7 @@ app_methods.getRandomColor = function () {
 }
 
 // Search with fullname or username
-app_methods.onClick_searchBarAdvs = function(){
+app_methods.onClick_search = function(){
     if (this.search_bar_val != null){
         this.pages = null;
     
@@ -63,31 +63,45 @@ app_methods.onClick_searchBarAdvs = function(){
         else if (this.manager_panel == 'registered-locations'){
             this.getRegisteredLocations(1)
         }
-        this.search_bar_val = null;
     }
+}
+
+
+app_methods.changeSelectedKaravan = function(){
+    if (this.selected_karavan_uuid == ''){return;}
+
+    if(this.manager_panel == 'manager-dashboard'){ this.getKaravanGeneralInfo() }
+    else if(this.manager_panel == 'show-all-users-info'){ this.showAllUsersInfo(1) }
+    else if(this.manager_panel == 'souvenir-photos'){ this.getSouvenirPhotos(1) }
+    else if(this.manager_panel == 'registered-locations'){ this.getRegisteredLocations(1) }
+    else if(this.manager_panel == 'add-user-to-karavan'){ this.addUserToKaravan() }
 }
 
 
 app_methods.getSouvenirPhotos = function(page){
     if (this.selected_karavan_uuid == ''){
-        Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
-        return;
+        this.change_panel('manager', 'souvenir-photos')
+        return
     }
+    
     this.activeIndexPage = page;
     data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'time':this.selected_time, 'event':this.selected_event, 'search_value':this.search_bar_val}
     axios.post('/get-souvenir-photos', data).then(response => {
 
         if (response.data['status-code'] == 200) {
+            var events;
             this.souvenir_photos = response.data['result']
+            events = response.data['events']
 
             for (var i=0 ; i < this.souvenir_photos.length;i++ ){
-                if (this.souvenir_photos[i][4]['event'] == 'arbaeen'){this.souvenir_photos[i][4]['event']='اربعین' }
-                else if (this.souvenir_photos[i][4]['event'] == 'moharram'){this.souvenir_photos[i][4]['event']='محرم' }
-                else if (this.souvenir_photos[i][4]['event'] == 'fetr'){this.souvenir_photos[i][4]['event']='فطر' }
-                else if (this.souvenir_photos[i][4]['event'] == 'ghadir'){this.souvenir_photos[i][4]['event']='غدیر' }
-                else if (this.souvenir_photos[i][4]['event'] == 'other'){this.souvenir_photos[i][4]['event']='سایر' }
+                for (var key in events) {
+                    if (events[key] === this.souvenir_photos[i][4]['event']) {
+                        this.souvenir_photos[i][4]['event']= key;
+                    }
+                }
             }
 
+            this.karavan_events = response.data['events']
             this.pages = response.data['count_pages']
             this.change_panel('manager', 'souvenir-photos')
             this.$nextTick(() => {
@@ -119,7 +133,6 @@ app_methods.changePanelForAllUsersLocations = function(){
 
 app_methods.changePanelForAllUsersSouvenirPhotos = function(){
     this.show_all_users_souvenir_album = !this.show_all_users_souvenir_album;
-
     if (this.show_all_users_souvenir_album == false){
         this.getSouvenirPhotos(1);
     }
@@ -129,8 +142,8 @@ app_methods.changePanelForAllUsersSouvenirPhotos = function(){
 // retrieve karavan users locations
 app_methods.getRegisteredLocations = function(page){
     if (this.selected_karavan_uuid == ''){
-        Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
-        return;
+        this.change_panel('manager', 'registered-locations')
+        return
     }
     if (this.show_all_users_locations_on_map == true){
         this.showAllUsersLocationsOnMap();
@@ -154,8 +167,8 @@ app_methods.getRegisteredLocations = function(page){
 
 app_methods.showAllUsersInfo = function(page){
     if (this.selected_karavan_uuid == ''){
-        Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
-        return;
+        this.change_panel('manager', 'show-all-users-info')
+        return
     }
     this.activeIndexPage = page;
     
@@ -374,10 +387,6 @@ app_methods.showLocation = function(lon,lat){
 
 
 app_methods.addUserToKaravan = function(){
-    if (this.selected_karavan_uuid == ''){
-        Swal.fire({title:'انتخاب کاروان' ,text:'لطفا ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
-        return;
-    }
     this.change_panel('manager', 'add-user-to-karavan');
 }
 
@@ -436,9 +445,19 @@ app_methods.sendUserInfoToAddToKaravan = function(type){
                     Swal.fire({title:'نامعتبر' ,text:'لطفا فایل نمونه را مشاهده و طبق آن اطلاعات را ارسال کنید', icon:'error', confirmButtonText:'تایید'})
                     return
                 }
-                Swal.fire({title:'توجه' ,text:'نتیجه ثبت نام را در نتیجه ارسال فایل می توانید مشاهده کنید', icon:'info', confirmButtonText:'تایید'})
                 this.res_upload_excel_href = response.data['path_result_excel']
-                this.show_res_upload_excel = true;
+                
+                Swal.fire({
+                    title: 'فایل دریافت شد',
+                    text: 'جهت دانلود و مشاهده نتیجه بر روی تایید کلیک کنید',
+                    icon: 'success',
+                    confirmButtonText: 'تایید',
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = this.res_upload_excel_href;
+                    }
+                });
+                this.showAllUsersInfo(1)
                 })
         }
     }
@@ -460,6 +479,27 @@ app_methods.addKaravan = function(){
                 }
                 else {
                     Swal.fire({title:'ناموفق' ,text:'ایجاد کاروان جدید ناموفق بود', icon:'error', confirmButtonText:'تایید'})
+                }
+            })
+        }
+})}
+
+
+app_methods.addEventToKaravan = function(){
+    Swal.fire({
+        title: 'یک نام برای رویداد انتخاب کنید',
+        input: 'text',
+        inputPlaceholder: 'مثال : اربعین',
+      }).then( (input) => {
+          
+        data = {'event_name': input.value, 'karavan_uuid': this.selected_karavan_uuid}
+        if (input.value != null && input.value != ''){
+            axios.post('/add-event-to-karavan', data).then(response => {  
+                if (response.data['status-code'] == 200){
+                    Swal.fire({title:'ثبت رویداد' ,text:'رویداد جدید با موفقیت اضافه شد', icon:'success', confirmButtonText:'تایید'})
+                }
+                else {
+                    Swal.fire({title:'ناموفق' ,text:'نام رویداد تکراری است. لطفا نام دیگری را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
                 }
             })
         }
@@ -539,7 +579,7 @@ app_methods.signupManager = function(){
 
 app_methods.getKaravanGeneralInfo = function(){
     if (this.selected_karavan_uuid == ''){
-        this.show_karavan_info = false;
+        this.change_panel('manager', 'manager-dashboard')
         return
     }
     data = {'karavan_uuid': this.selected_karavan_uuid}
@@ -563,7 +603,6 @@ app_methods.changeUserAccountStatus = function(user_uuid, new_status){
 
     axios.post('/change-account-status', data).then(response => {
         if (response.data['status-code'] == 200){
-            Swal.fire({title:'موفق' ,text:'وضعیت حساب کاربر با موفقیت تغییر کرد', icon:'success', confirmButtonText:'تایید'})
             this.users_info = response.data['result']
             this.pages = response.data['count_pages']
         }
@@ -574,7 +613,6 @@ app_methods.getMorris = function () {
     $("#donut_chart").empty();
     
     this.change_panel('manager', 'manager-dashboard')
-    this.show_karavan_info = true
     this.$nextTick(() => {
         
         Morris.Donut({
@@ -606,7 +644,8 @@ Vue.createApp({
         manager_karavans_info: '',
         users_info:'' ,
         karavan_name: '',
-        show_karavan_info: false,
+        
+        karavan_events: '',
 
         //  Sign in/up Info
         username: '',
@@ -657,6 +696,9 @@ Vue.createApp({
         count_karavan_locations: 0,
         count_karavan_active_accounts: 0,
         count_karavan_no_active_accounts: 0,
+
+        // To add event to karavan
+        event_name: '',
 
         map_icons_name:[
                         'pink2.png', 'purple.png', 'brown.png', 

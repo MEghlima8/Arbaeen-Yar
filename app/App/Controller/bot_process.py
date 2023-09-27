@@ -1,4 +1,4 @@
-from App.Controller.keyboard import reply_markup_cancel, reply_markup_photo_event, reply_markup_cancel_help
+from App.Controller.keyboard import reply_markup_cancel, keyboard_photo_events , reply_markup_cancel_help
 from App.Controller import db_postgres_controller as db
 import uuid
 import json
@@ -13,7 +13,11 @@ import PIL.Image
 import PIL.ExifTags
 
 
-events = {'moharram':'محرم', 'arbaeen':'اربعین', 'ghadir':'غدیر', 'fetr':'فطر', 'other':'سایر'}
+def get_karavan_events(chat_id):
+    user_uuid = db.db.getUserUUIDFromChatId(chat_id)
+    karavan_uuid = db.db.getKaravanUUIDFromUser(user_uuid)
+    events = db.db.getKaravanEvents(karavan_uuid)[0][0]
+    return events
 
 
 # Get image location coordinate
@@ -129,17 +133,20 @@ async def get_user_location(update, context, _text, _STEP, chat_id):
     karavan_uuid = db.db.getKaravanUUIDFromUser(user_uuid)
     db.db.addReqToDb(uuid.uuid4().hex, user_uuid, karavan_uuid, '/send-my-location', address, j_date_time, 'done')
     await context.bot.send_message(chat_id=chat_id, text='موقعیت مکانی شما با موفقیت ثبت شد', reply_markup=reply_markup_cancel)
-    
-    
+        
     
 # Record a souvenir photo - send message to get event
 async def record_souvenir_photo(_update, context, _text, _STEP, chat_id):
+    karavan_events = get_karavan_events(chat_id)
+    reply_markup_photo_event = keyboard_photo_events(karavan_events)
     db.db.changeUserSTEP('handle-photo-event', chat_id)
     await context.bot.send_message(chat_id=chat_id, text='رویداد مورد نظر خود را انتخاب کنید :',reply_markup=reply_markup_photo_event)
 
+
 # Record a souvenir photo - send message to get image
 async def handle_photo_event(_update, context, text, _STEP, chat_id):
-    if text in events.keys():
+    karavan_events = get_karavan_events(chat_id)
+    if text in karavan_events.values():
         db.db.changeFirstTextMsg(text,chat_id) # Store event name in database
         db.db.changeUserSTEP('handle-record-souvenir-photo', chat_id)
         await context.bot.send_message(chat_id=chat_id, text=''' تصویر مورد نظر را به صورت فایل ارسال کنید :\nاگر به صورت فایل ارسال نکنید یا در زمان عکس گرفتن موقعیت مکانی دستگاه شما خاموش باشد موقعیت مکانی شما ثبت نخواهد شد''',

@@ -98,6 +98,13 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await start(update, context, None, None, chat_id)
         return
     
+
+    # Check this account is active or not
+    account_status = db.db.checkIsUserActive(chat_id)
+    if account_status[0][0] and account_status[0][1]['status']=='disable':
+        await context.bot.send_message(chat_id, text='حسابتان توسط مدیر کاروان غیرفعال شده است. از او بخواهید دوباره حسابتان را فعال کند')
+        return
+    
     for command in commands:
         valid_command = False
         pattern, step, callback = command
@@ -105,12 +112,7 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             valid_command = True
             await callback(update,context,text,STEP,chat_id)
             break
-        
-    account_status = db.db.checkIsUserActive(chat_id)
-    if account_status[0][0] and account_status[0][1]['status']=='disable':
-        await context.bot.send_message(chat_id, text='حسابتان توسط مدیر کاروان غیرفعال شده است. از او بخواهید دوباره حسابتان را فعال کند')
-        return
-        
+                
     if not valid_command:
         await context.bot.send_message(chat_id=chat_id, text='لطفا یک دستور معتبر وارد کنید!')
            
