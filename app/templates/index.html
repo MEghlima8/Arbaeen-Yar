@@ -343,9 +343,10 @@
                                                     <th>نام کاربری</th>
                                                     <th>موقعیت های مکانی</th>
                                                     <th>وضعیت حساب</th>
+                                                    <th>زمان ساخت حساب</th>
                                                     <th>زمان فعال شدن حساب</th>
                                                     <th>آخرین فعالیت</th>
-                                                    <th>ویرایش اطلاعات</th>
+                                                    <th>ویرایش</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -379,6 +380,7 @@
                                                         </div>
                                                     </td>
 
+                                                    <td>${ user[5]['created']['time'] }$ | ${ user[5]['created']['date'] }$</td>
 
                                                     <td v-if="user[5]['status'] != 'false'">
                                                         <i class="material-icons" style="vertical-align: middle;">done</i>
@@ -389,7 +391,7 @@
                                                     <td v-if="user[6] == null">بدون فعالیت</td>
                                                     <td v-else>${ user[6]['time'] }$ | ${ user[6]['date'] }$</td>
 
-                                                    <td><a @click.prevent="edit_user_info_panel(user[0],user[2])" href="#"><i class="material-icons">mode_edit</i></a></td>
+                                                    <td><a @click.prevent="edit_user_info_panel(user[0],user[2],user[3])" href="#"><i class="material-icons">mode_edit</i></a></td>
 
                                                 </tr>
                                             </tbody>
@@ -428,7 +430,7 @@
                                     <h3>تغییر اطلاعات ${current_user_fullname}$ </h3>
                                     </br>
                                     <div class="alert" style="background-color: #006666;">
-                                        <strong>اگر نمی خواهید همه ی اطلاعات را تغییر دهید آن ها را خالی رها کنید</strong>
+                                        <strong>اگر نمی خواهید همه ی اطلاعات را تغییر دهید آن ها را رها کنید</strong>
                                     </div>
 
                                     <div class="clearfix">
@@ -579,7 +581,8 @@
 
                                         <div v-for="photo in souvenir_photos" class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
                                             
-                                            <a class="container-album" :href="photo[4]['path']" >
+                                            <a class="container-album" :href="photo[4]['path']" 
+                                                :data-sub-html="gallery_image_description(photo[0],photo[1],photo[3]['date'],photo[3]['time'])" >
                                                 <img class="img-responsive thumbnail album-img-fix-size image-album" :src="photo[4]['path']">
                                             </a>
 
@@ -699,7 +702,7 @@
                                                     <td>${ location[5] }$</td>
                                                     <td> <a @click.prevent="showLocation(location[4]['lon'], location[4]['lat'])" href="#">
                                                         <span v-if="show_location == 'true'" >بستن</span>
-                                                        <span v-else >نمایش</span>
+                                                        <span v-else>نمایش</span>
                                                         </a>
                                                     </td>
                                                 </tr>

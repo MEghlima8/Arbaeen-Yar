@@ -71,8 +71,9 @@ class PostgreSQL:
 
 
     def signupUser(self, user_uuid, username, fullname, password):
+        current_time = json.loads(self.getCurrentTime(False))
         query = "INSERT INTO users (uuid, fullname, username, password, is_user, active) VALUES (%s, %s, %s, %s, 'true', %s)"
-        args =(user_uuid, fullname, username, password,json.dumps({'status':'false'}))
+        args =(user_uuid, fullname, username, password,json.dumps({'status':'false', 'created':current_time}))
         self.execute_query(query, args)
         return 'true'
 
@@ -101,7 +102,7 @@ class PostgreSQL:
     
     def countKaravanReqsType(self, karavan_uuid):
         query = """SELECT type, COUNT(*) AS count FROM request
-                    WHERE status = 'done' GROUP BY type;"""    
+                    WHERE status = 'done' AND karavan_uuid=%s GROUP BY type"""
         args = (karavan_uuid,)
         res = self.execute_query(query,args).fetchall()
         return res
@@ -213,11 +214,21 @@ class PostgreSQL:
     def activeUserAccount(self, uuid, chat_id):
         query = "DELETE FROM users WHERE chat_id = %s"
         args = (chat_id,)
-        res = self.execute_query(query, args)
-        query = "UPDATE users set chat_id=%s , active=%s, step='home' WHERE uuid=%s"
-        args = (chat_id, self.getCurrentTime(True), uuid)
-        res = self.execute_query(query, args)
-        return res
+        self.execute_query(query, args)
+        current_time = json.loads(self.getCurrentTime(True))        
+        val2 = f'"{current_time["date"]}"'
+        val3 = f'"{current_time["time"]}"'
+        status_key = '{status}'
+        date_key = '{date}'
+        time_key = '{time}'
+
+        query = f"""UPDATE users SET chat_id=%s, step='home',
+                        active = jsonb_set( jsonb_set( jsonb_set(active,'{status_key}', '"true"'),
+                                            '{date_key}', '{val2}'),
+                                        '{time_key}', '{val3}') WHERE uuid=%s"""
+        args = (chat_id, uuid)
+        self.execute_query(query, args)
+        return 'true'
 
 
     def getManagerFullname(self, username):

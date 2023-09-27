@@ -128,10 +128,12 @@ def add_new_karavan():
         resp = {"result": "Invalid name", "status-code":400}
     return resp
 
+
 @app.route('/get-karavan-general-info', methods= ['POST'])
 def get_karavan_general_info():
     karavan_uuid = request.get_json()['karavan_uuid']
-    res = web_process.get_karavan_general_info(karavan_uuid)    
+    print('\n\nkaravan_uuid: ', karavan_uuid,'\n\n')
+    res = web_process.karavan_general_info(karavan_uuid)    
     return res
     
 

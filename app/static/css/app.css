@@ -114,3 +114,8 @@
 .switch label .lever1:after {
   background-color:#BDBDBD !important;
 }
+
+#lg-counter {
+  float: left;
+  direction: ltr;
+}

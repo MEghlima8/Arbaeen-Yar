@@ -67,17 +67,6 @@ app_methods.onClick_search = function(){
 }
 
 
-app_methods.changeSelectedKaravan = function(){
-    if (this.selected_karavan_uuid == ''){return;}
-
-    if(this.manager_panel == 'manager-dashboard'){ this.getKaravanGeneralInfo() }
-    else if(this.manager_panel == 'show-all-users-info'){ this.showAllUsersInfo(1) }
-    else if(this.manager_panel == 'souvenir-photos'){ this.getSouvenirPhotos(1) }
-    else if(this.manager_panel == 'registered-locations'){ this.getRegisteredLocations(1) }
-    else if(this.manager_panel == 'add-user-to-karavan'){ this.addUserToKaravan() }
-}
-
-
 app_methods.getSouvenirPhotos = function(page){
     if (this.selected_karavan_uuid == ''){
         this.change_panel('manager', 'souvenir-photos')
@@ -187,9 +176,14 @@ app_methods.showAllUsersInfo = function(page){
 }
 
 
-app_methods.edit_user_info_panel = function(user_uuid,fullname){
+app_methods.edit_user_info_panel = function(user_uuid,fullname,username){
     this.current_user_uuid = user_uuid;
+    this.current_user_username = username;
     this.current_user_fullname = fullname;
+    this.$nextTick(() => {
+        this.username = username;
+        this.fullname = fullname;
+    })
     this.change_panel('manager','edit-user-info')
 }
 
@@ -267,6 +261,8 @@ app_methods.showAllUsersLocationsOnMap = function(){
                     }
                     this.marker.bindPopup(
                         "<h6>نام: " + this.registered_locations[i][0] + "</h6>" +
+                        "<h6>طول جغرافیایی: " + this.registered_locations[i][4]['lon'] + "</h6>" +
+                        "<h6>عرض جغرافیایی: " + this.registered_locations[i][4]['lat'] + "</h6>" +
                     "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.registered_locations[i][3]['date'] + "</h6>" +
                     "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.registered_locations[i][3]['time'] + "</h6>"
                     );
@@ -292,6 +288,7 @@ app_methods.showAllUsersLocationsOnMap = function(){
         }
     })
 }
+
 
 // retrieve all registered locations of the user
 app_methods.showUserAllLocations = function(user_uuid,check_selected_time){
@@ -326,9 +323,11 @@ app_methods.showUserAllLocations = function(user_uuid,check_selected_time){
                 this.marker = L.marker([this.userAllLocations[0][2]['lat'], this.userAllLocations[0][2]['lon']]).addTo(this.map);
                 latlngs.push(this.marker.getLatLng())
 
-                this.marker.bindPopup("<h6>آخرین موقعیت مکانی ثبت شده</h6>" +
-                                "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[0][3]['date'] + "</h6>" +
-                                "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[0][3]['time'] + "</h6>"
+                this.marker.bindPopup(
+                                "<h6>طول جغرافیایی: " + this.userAllLocations[0][2]['lon'] + "</h6>" +
+                                "<h6>عرض جغرافیایی: " + this.userAllLocations[0][2]['lat'] + "</h6>" +
+                                "<h6>تاریخ: " + this.userAllLocations[0][3]['date'] + "</h6>" +
+                                "<h6>زمان: " + this.userAllLocations[0][3]['time'] + "</h6>"
                                 );
                             
                 if (this.userAllLocations.length != 1){
@@ -337,8 +336,10 @@ app_methods.showUserAllLocations = function(user_uuid,check_selected_time){
                         latlngs.push(this.marker.getLatLng())
 
                         this.marker.bindPopup(
-                        "<div style='margin-bottom: 5px;'></div>" + "<h6>تاریخ: " + this.userAllLocations[i][3]['date'] + "</h6>" +
-                        "<div style='margin-bottom: 5px;'></div>" + "<h6>زمان: " + this.userAllLocations[i][3]['time'] + "</h6>"
+                        "<h6>طول جغرافیایی: " + this.userAllLocations[i][2]['lon'] + "</h6>" +
+                        "<h6>عرض جغرافیایی: " + this.userAllLocations[i][2]['lat'] + "</h6>" +
+                        "<h6>تاریخ: " + this.userAllLocations[i][3]['date'] + "</h6>" +
+                        "<h6>زمان: " + this.userAllLocations[i][3]['time'] + "</h6>"
                         );
                     }
                     // Create a polyline and add it to the map
@@ -379,7 +380,12 @@ app_methods.showLocation = function(lon,lat){
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19,
             }).addTo(map);
-            L.marker([lat, lon]).addTo(map);
+            this.marker = L.marker([lat, lon]).addTo(map);
+            this.marker.bindPopup(
+            "<h6>طول جغرافیایی: " + lon + "</h6>" +
+            "<h6>عرض جغرافیایی: " + lat + "</h6>"
+            );
+
         })
     }
 }
@@ -577,25 +583,6 @@ app_methods.signupManager = function(){
     })
 };
 
-app_methods.getKaravanGeneralInfo = function(){
-    if (this.selected_karavan_uuid == ''){
-        this.change_panel('manager', 'manager-dashboard')
-        return
-    }
-    data = {'karavan_uuid': this.selected_karavan_uuid}
-    axios.post('/get-karavan-general-info', data).then(response => {
-        
-        if (response.data['status-code'] == 200){
-
-            this.count_karavan_locations = response.data['type']['/send-my-location']
-            this.count_karavan_souvenir_photos = response.data['type']['/souvenir-photo']
-            this.count_karavan_active_accounts = response.data['account']['active']
-            this.count_karavan_no_active_accounts = response.data['account']['noactive']
-            this.getMorris();
-        }
-    });  
-}
-
 
 app_methods.changeUserAccountStatus = function(user_uuid, new_status){
     data = {'user_uuid':user_uuid, 'new_status':new_status, 
@@ -609,30 +596,83 @@ app_methods.changeUserAccountStatus = function(user_uuid, new_status){
     })
 }
 
-app_methods.getMorris = function () {
-    $("#donut_chart").empty();
-    
+
+app_methods.changeSelectedKaravan = function(){
+    if (this.selected_karavan_uuid == ''){return;}
+
+    switch(this.manager_panel){
+        case 'manager-dashboard':
+            this.getKaravanGeneralInfo();
+            return;
+        case 'show-all-users-info':
+            this.showAllUsersInfo(1);
+            return;
+        case 'souvenir-photos':
+            this.getSouvenirPhotos(1);
+            return;
+        case 'registered-locations':
+            this.getRegisteredLocations(1);
+            return;
+        case 'add-user-to-karavan':
+            this.addUserToKaravan();
+            return;
+    }
+
+    if(this.manager_panel == 'manager-dashboard'){ this.getKaravanGeneralInfo() }
+    else if(this.manager_panel == 'show-all-users-info'){ this.showAllUsersInfo(1) }
+    else if(this.manager_panel == 'souvenir-photos'){ this.getSouvenirPhotos(1) }
+    else if(this.manager_panel == 'registered-locations'){ this.getRegisteredLocations(1) }
+    else if(this.manager_panel == 'add-user-to-karavan'){ this.addUserToKaravan() }
+}
+
+
+app_methods.getKaravanGeneralInfo = function(){
     this.change_panel('manager', 'manager-dashboard')
-    this.$nextTick(() => {
+    if (this.selected_karavan_uuid == ''){
+        return
+    }
+
+    data = {'karavan_uuid': this.selected_karavan_uuid}
+    axios.post('/get-karavan-general-info', data).then(response => {
+        console.log(this.selected_karavan_uuid)
+        console.log(response.data)
         
-        Morris.Donut({
-            element: 'donut_chart',
-            data: [
-                {
-                    label: 'حساب های فعال',
-                    value: this.count_karavan_active_accounts
+        if (response.data['status-code'] == 200){
+            this.count_karavan_locations = response.data['type']['/send-my-location']
+            this.count_karavan_souvenir_photos = response.data['type']['/souvenir-photo']
+            
+            this.count_karavan_active_accounts = response.data['account']['active']
+            this.count_karavan_no_active_accounts = response.data['account']['noactive']
+
+
+            $("#donut_chart").empty();
+            Morris.Donut({
+                element: 'donut_chart',
+                data: [
+                    {
+                        label: 'حساب های فعال',
+                        value: this.count_karavan_active_accounts
+                    },
+                    {
+                        label: 'حساب های غیرفعال',
+                        value: this.count_karavan_no_active_accounts
+                    },
+                ],
+                colors: ['rgb(0, 188, 212)', 'rgb(233, 30, 99)'],
+                formatter: function (y) {
+                    return y + ' حساب '
                 },
-                {
-                    label: 'حساب های غیرفعال',
-                    value: this.count_karavan_no_active_accounts
-                },
-            ],
-            colors: ['rgb(0, 188, 212)', 'rgb(233, 30, 99)'],
-            formatter: function (y) {
-                return y + ' حساب '
-            },
-        });
-    });   
+            });
+
+        }
+    });  
+}
+
+
+
+app_methods.gallery_image_description = function(fullname, username, date, time){
+    return 'نام: ' + fullname + '  |  نام کاربری: ' + username + 
+           '  |  تاریخ: ' + date + '  |  زمان: ' + time
 }
 
 
@@ -658,6 +698,7 @@ Vue.createApp({
         // Handle user to edit info
         current_user_uuid: null,
         current_user_fullname: null,
+        current_user_username: null,
 
         // search-bar
         search_bar_val: null,
@@ -707,7 +748,7 @@ Vue.createApp({
                         'green.png', 'orange2.png','caribbean-blue.png', 'pink.png', 
                         ]
     } },
-    
+
     delimiters: ["${", "}$"],    
     methods:app_methods,
     

@@ -92,7 +92,7 @@ def convert_add_user_error_to_persian(error):
             return 'نام کاربری فقط می تواند شامل حروف کوچک و بزرگ انگلیسی و اعداد و نقطه و زیرخط(آندرلاین) باشد'
 
 
-def get_karavan_general_info(karavan_uuid):
+def karavan_general_info(karavan_uuid):
     count_karavan_users_account_status = db.db.countKaravanUsersAccountStatus(karavan_uuid)
     count_karavan_reqs_type = db.db.countKaravanReqsType(karavan_uuid)
     
