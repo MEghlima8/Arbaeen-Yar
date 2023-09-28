@@ -93,9 +93,14 @@ app_methods.getSouvenirPhotos = function(page){
             this.karavan_events = response.data['events']
             this.pages = response.data['count_pages']
             this.change_panel('manager', 'souvenir-photos')
+
             this.$nextTick(() => {
                 $(function () {
-                    $('#aniimated-thumbnials').lightGallery({
+                    $('#lightgallery').lightGallery({
+                        thumbnail: true,
+                        selector: 'a'
+                    });
+                    $('.lightgallery').lightGallery({
                         thumbnail: true,
                         selector: 'a'
                     });
@@ -634,9 +639,6 @@ app_methods.getKaravanGeneralInfo = function(){
 
     data = {'karavan_uuid': this.selected_karavan_uuid}
     axios.post('/get-karavan-general-info', data).then(response => {
-        console.log(this.selected_karavan_uuid)
-        console.log(response.data)
-        
         if (response.data['status-code'] == 200){
             this.count_karavan_locations = response.data['type']['/send-my-location']
             this.count_karavan_souvenir_photos = response.data['type']['/souvenir-photo']

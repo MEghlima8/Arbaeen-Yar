@@ -566,7 +566,7 @@
                                                     <td v-else>${ photo[4]['address']['display_name'] }$</td>
                                                     <td>${ photo[4]['event'] }$</td>
                                                     <td>${ photo[5] }$</td>
-                                                    <td> <a :href="photo[4]['path']" target="_blank">نمایش</a> </td>
+                                                    <td class="lightgallery"> <a :href="photo[4]['path']" target="_blank">نمایش</a> </td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -577,7 +577,7 @@
 
 
                                     <!-- show all users souvenir album -->
-                                    <div v-show="show_all_users_souvenir_album == true" id="aniimated-thumbnials" class="list-unstyled row clearfix">
+                                    <div v-show="show_all_users_souvenir_album == true" id="lightgallery" class="list-unstyled row clearfix">
 
                                         <div v-for="photo in souvenir_photos" class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
                                             
