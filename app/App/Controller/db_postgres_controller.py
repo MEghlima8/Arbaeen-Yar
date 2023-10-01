@@ -128,6 +128,12 @@ class PostgreSQL:
         res = self.execute_query(query,args).fetchone()[0]
         return res
     
+    def getManagerUUID(self, username):
+        query = "SELECT uuid FROM users WHERE username=%s AND is_manager = 'true'"
+        args = (username,)
+        res = self.execute_query(query,args).fetchone()
+        return res
+    
     def getUserUUIDFromChatId(self, chat_id):
         query = "SELECT uuid FROM users WHERE chat_id=%s"
         args = (chat_id,)
@@ -136,11 +142,25 @@ class PostgreSQL:
     
     
     def getKaravansInfo(self,manager_uuid):
-        query = "SELECT uuid,name FROM karavan WHERE manager_uuid=%s ORDER BY counter ASC"
+        query = "SELECT uuid,name FROM karavan WHERE managers ? %s ORDER BY counter ASC"
         args = (manager_uuid,)
         res = self.execute_query(query,args).fetchall()
         return res
         
+        
+    def getAllKaravanManagersUuid(self, karavan_uuid):
+        query = "SELECT managers FROM karavan WHERE uuid=%s"
+        args = (karavan_uuid,)
+        res = self.execute_query(query,args).fetchone()
+        return res
+      
+       
+    def getManagerInfo(self, manager_uuid):
+        query = "SELECT fullname, username FROM users WHERE uuid=%s"
+        args = (manager_uuid,)
+        res = self.execute_query(query,args).fetchall()
+        return res   
+    
 
     def getKaravanUUID(self, manager_uuid):
         query = "SELECT uuid FROM karavan WHERE manager_uuid=%s"
@@ -148,12 +168,14 @@ class PostgreSQL:
         res = self.execute_query(query,args).fetchone()[0]
         return res
     
+    
     def getKaravanUUIDFromUser(self, user_uuid):
         query = "SELECT karavan_uuid FROM karavan_users WHERE user_uuid=%s"
         args = (user_uuid,)
         res = self.execute_query(query,args).fetchone()[0]
         return res
-    
+
+
     def getKaravanEvents(self, karavan_uuid):
         query = "SELECT events FROM karavan WHERE uuid=%s"
         args = (karavan_uuid,)
@@ -161,13 +183,23 @@ class PostgreSQL:
         return res
       
     
-    def createNewKaravan(self, uuid, karavan_name, manager_uuid, no_event_random_uuid):
+    def createNewKaravan(self, uuid, karavan_name, manager_uuid, manager_username, no_event_random_uuid):
+        managers = json.dumps({manager_uuid : manager_username})
         event = json.dumps({'بدون رویداد' : no_event_random_uuid})
-        query = "INSERT INTO karavan (uuid, name, manager_uuid, events) VALUES (%s, %s, %s, %s)"
-        args = (uuid,karavan_name, manager_uuid, event)
+        query = "INSERT INTO karavan (uuid, name, manager_uuid, managers, events) VALUES (%s, %s, %s, %s, %s)"
+        args = (uuid,karavan_name, manager_uuid, managers, event)
         self.execute_query(query, args)
         return 'true'
         
+
+    def AddManagerToKaravan(self, karavan_uuid, manager_uuid, manager_username):
+        x = f'{{"{manager_uuid}": "{manager_username}"}}'
+        query = f"""UPDATE karavan SET managers = managers || %s 
+                    WHERE uuid = %s;"""
+        args = (x, karavan_uuid)
+        self.execute_query(query,args)
+        return 'done'
+
 
     def addUserFromBotToDB(self, uuid, chat_id):
         query = "INSERT INTO users (uuid,chat_id,step) VALUES (%s, %s, 'home')"
@@ -373,6 +405,8 @@ class PostgreSQL:
         
         self.execute_query(query, args)
         return 'done'
+
+
 
 db = PostgreSQL(host=host, database=database, user=user, password=password, port=port)
 db.connect()

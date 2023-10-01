@@ -106,8 +106,7 @@ async def get_user_password_to_signin(_update, context, text, _STEP, chat_id):
         db.db.changeUserSTEP('get-user-username-to-signin', chat_id)
         # Wrong username and password
         await context.bot.send_message(chat_id=chat_id, text='نام کاربری یا رمز عبور اشتباه می باشد \nنام کاربری را مجدد وارد کنید :')
-        
-    
+         
     
 # Send my location - send message to user to send location
 async def send_my_location(_update, context, _text, _STEP, chat_id):
@@ -185,4 +184,30 @@ async def handle_record_souvenir_photo(update, context, _text, _STEP, chat_id):
     # Add request to database
     db.db.addReqToDb(uuid.uuid4().hex, user_uuid, karavan_uuid, '/souvenir-photo', params, j_date_time, 'done')
     await context.bot.send_message(chat_id=chat_id, text='تصویر با موفقیت ثبت شد',reply_markup=reply_markup_cancel)
+    db.db.changeUserSTEP('home', chat_id)
+    
+
+# Send message to the karavan manager
+async def send_message(update, context, _text, _STEP, chat_id):
+    db.db.changeUserSTEP('handle-send-message', chat_id)
+    await context.bot.send_message(chat_id=chat_id, text='لطفا پیام خود را ارسال کنید')
+
+# Send message to the karavan manager
+async def handle_send_messsage(update, context, _text, _STEP, chat_id):
+    if update.message.text is None:
+        await context.bot.send_message(chat_id=chat_id, text='لطفا فقط پیام متنی ارسال کنید')
+        return
+    if len(update.message.text) > 150:
+        await context.bot.send_message(chat_id=chat_id, text='پیام طولانی می باشد. طول پیام نمی تواند بیشتر از 150 حرف باشد')
+        return
+    
+    j_date_time = get_datetime()    
+    params = json.dumps({"text":update.message.text , "status":"unread"})
+    
+    user_uuid = db.db.getUserUUIDFromChatId(chat_id)
+    karavan_uuid = db.db.getKaravanUUIDFromUser(user_uuid)
+    
+    # Add request to database
+    db.db.addReqToDb(uuid.uuid4().hex, user_uuid, karavan_uuid, '/send-message', params, j_date_time, 'done')
+    await context.bot.send_message(chat_id=chat_id, text='پیام با موفقیت برای مدیر ارسال شد',reply_markup=reply_markup_cancel)
     db.db.changeUserSTEP('home', chat_id)

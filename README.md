@@ -1,6 +1,6 @@
 # Arbaeein Yar
 Arbaeen Yar helps people to have an easier trip to Karbala
-This is version 0.6.1
+This is version 0.7.0
 
 
 ## Configuration

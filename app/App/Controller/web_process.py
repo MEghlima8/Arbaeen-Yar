@@ -24,7 +24,7 @@ def createNewKaravan(karavan_name, manager_username):
         return 'invalid'
     manager_uuid = db.db.getUserUUID(manager_username)
     karavan_uuid = uuid.uuid4().hex
-    db.db.createNewKaravan(karavan_uuid, karavan_name, manager_uuid, uuid.uuid4().hex)
+    db.db.createNewKaravan(karavan_uuid, karavan_name, manager_uuid, manager_username, uuid.uuid4().hex)
     db.db.addUserToKaravanUsers(uuid.uuid4().hex, manager_uuid, karavan_uuid, 'manager')
     return 'true'
 
@@ -146,7 +146,6 @@ def karavan_general_info(karavan_uuid):
             },
         "status-code":200
         }
-    
     return res
 
 
@@ -162,3 +161,4 @@ def add_event_to_karavan(karavan_uuid, event_name):
         res = {"result":"duplicate name error" , "status-code":400}
     
     return res
+

@@ -7,6 +7,9 @@
   text-align: center;
 }
 
+#karavan_managers_table thead tr th{
+  text-align: center;
+}
 
 #map {     
   height: 230px; 
@@ -118,4 +121,9 @@
 #lg-counter {
   float: left;
   direction: ltr;
+}
+
+
+.activeMenuToggle a{
+  color: #009688 !important;
 }

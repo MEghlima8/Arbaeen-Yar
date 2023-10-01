@@ -34,6 +34,7 @@ app_methods.isActivePanel = function(panel){
     if (this.manager_panel == panel) { return true } else {return false}
 }
 
+
 app_methods.isActivePage = function(index){
     return index === this.activeIndexPage;
 }
@@ -65,6 +66,54 @@ app_methods.onClick_search = function(){
         }
     }
 }
+
+
+app_methods.receivedMessages = function(page){
+    if (this.selected_karavan_uuid == ''){
+        this.change_panel('manager', 'received-messages')
+        return
+    }
+    this.activeIndexPage = page;
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'time':this.selected_time, 'search_value':this.search_bar_val}
+    axios.post('/get-karavan-messages', data).then(response => {
+        if (response.data['status-code'] == 200) {
+            this.messages = response.data['result']
+            this.pages = response.data['count_pages']
+        }
+        else{
+            this.registered_locations = null;
+            this.pages = null;
+        }
+        this.change_panel('manager', 'received-messages')
+    })
+}
+
+
+
+// retrieve karavan users locations
+app_methods.getRegisteredLocations = function(page){
+    if (this.selected_karavan_uuid == ''){
+        this.change_panel('manager', 'registered-locations')
+        return
+    }
+    if (this.show_all_users_locations_on_map == true){
+        this.showAllUsersLocationsOnMap();
+        return;
+    }
+    this.activeIndexPage = page;
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'time':this.selected_time, 'search_value':this.search_bar_val}
+    axios.post('/get-registered-locations', data).then(response => {  
+        if (response.data['status-code'] == 200) {
+            this.registered_locations = response.data['result']
+            this.pages = response.data['count_pages']
+        }
+        else {
+            this.registered_locations = null;
+            this.pages = null;
+        }
+        this.change_panel('manager', 'registered-locations')
+    })
+}   
 
 
 app_methods.getSouvenirPhotos = function(page){
@@ -131,32 +180,6 @@ app_methods.changePanelForAllUsersSouvenirPhotos = function(){
         this.getSouvenirPhotos(1);
     }
 }
-
-
-// retrieve karavan users locations
-app_methods.getRegisteredLocations = function(page){
-    if (this.selected_karavan_uuid == ''){
-        this.change_panel('manager', 'registered-locations')
-        return
-    }
-    if (this.show_all_users_locations_on_map == true){
-        this.showAllUsersLocationsOnMap();
-        return;
-    }
-    this.activeIndexPage = page;
-    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'time':this.selected_time, 'search_value':this.search_bar_val}
-    axios.post('/get-registered-locations', data).then(response => {  
-        if (response.data['status-code'] == 200) {
-            this.registered_locations = response.data['result']
-            this.pages = response.data['count_pages']
-        }
-        else {
-            this.registered_locations = null;
-            this.pages = null;
-        }
-        this.change_panel('manager', 'registered-locations')
-    })
-}   
 
 
 app_methods.showAllUsersInfo = function(page){
@@ -396,6 +419,31 @@ app_methods.showLocation = function(lon,lat){
 }
 
 
+app_methods.addManagerToKaravan = function(){
+    if (this.selected_karavan_uuid == ''){
+        Swal.fire({title:'خطا' ,text:'ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
+        return;
+    }
+
+    Swal.fire({
+        title: 'نام کاربری مدیر مورد نظر را وارد کنید',
+        input: 'text',
+        inputPlaceholder: 'مثال : m_eghlima8',
+      }).then( (input) => {
+          
+        data = {'input_manager_username': input.value, 'karavan_uuid': this.selected_karavan_uuid}
+        if (input.value != null && input.value != ''){
+            axios.post('/add-manager-to-karavan', data).then(response => {
+                if (response.data['status-code'] == 200){
+                    Swal.fire({title:'موفقیت آمیز' ,text:'این کاربر به عنوان مدیر به کاروان اضافه شد', icon:'success', confirmButtonText:'تایید'})
+                }
+                else {
+                    Swal.fire({title:'ناموفق' ,text:'چنین نام کاربری وجود ندارد یا این نام کاربری متعلق به یک عضو کاروان می باشد نه یک مدیر', icon:'error', confirmButtonText:'تایید'})
+                }
+            })
+        }
+})}
+
 
 app_methods.addUserToKaravan = function(){
     this.change_panel('manager', 'add-user-to-karavan');
@@ -497,6 +545,11 @@ app_methods.addKaravan = function(){
 
 
 app_methods.addEventToKaravan = function(){
+    if (this.selected_karavan_uuid == ''){
+        Swal.fire({title:'خطا' ,text:'ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
+        return;
+    }
+
     Swal.fire({
         title: 'یک نام برای رویداد انتخاب کنید',
         input: 'text',
@@ -515,6 +568,25 @@ app_methods.addEventToKaravan = function(){
             })
         }
 })}
+
+
+app_methods.showKaravanManagers = function(page){
+    if (this.selected_karavan_uuid == ''){
+        Swal.fire({title:'خطا' ,text:'ابتدا کاروان مورد نظر خود را انتخاب کنید', icon:'error', confirmButtonText:'تایید'})
+        return;
+    }
+    data = {'page_index':page, 'karavan_uuid': this.selected_karavan_uuid}
+    this.activeIndexPage = page;
+
+    axios.post('/get-karavan-managers', data).then(response => { 
+        if (response.data['status-code'] == 200){
+            this.karavan_managers = response.data['result']
+            this.change_panel('manager', 'karavan-managers')
+            this.pages = response.data['count_pages']
+        }
+    })
+
+}
 
 
 app_methods.getKaravansName = function(){
@@ -536,6 +608,7 @@ app_methods.getKaravansName = function(){
         })
         this.manager_karavans_info = response.data['result']
 })}
+
 
 
 // Signin
@@ -621,6 +694,9 @@ app_methods.changeSelectedKaravan = function(){
         case 'add-user-to-karavan':
             this.addUserToKaravan();
             return;
+        case 'karavan-managers':
+            this.showKaravanManagers(1);
+            return;
     }
 
     if(this.manager_panel == 'manager-dashboard'){ this.getKaravanGeneralInfo() }
@@ -686,6 +762,7 @@ Vue.createApp({
         manager_karavans_info: '',
         users_info:'' ,
         karavan_name: '',
+        karavan_managers: '',
         
         karavan_events: '',
 
@@ -742,6 +819,9 @@ Vue.createApp({
 
         // To add event to karavan
         event_name: '',
+
+        // Karavan messages
+        messages: '',
 
         map_icons_name:[
                         'pink2.png', 'purple.png', 'brown.png', 

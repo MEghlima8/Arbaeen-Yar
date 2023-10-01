@@ -24,6 +24,9 @@
     <!-- Animation Css -->
     <link href="../static/css/animate.css" rel="stylesheet" />
 
+    <!--WaitMe Css-->
+    <link href="../static/css/waitMe.css" rel="stylesheet" />
+
     <!-- Light Gallery Plugin Css -->
     <link href="../static/css/lightgallery.css" rel="stylesheet">
 
@@ -197,22 +200,43 @@
                                     <span>صفحه اصلی</span>
                                 </a>
                             </li>
-                            <li :class="{ active: isActivePanel('show-all-users-info') }" style="border-bottom:inset;">
-                                <a @click.prevent="showAllUsersInfo(1)" href="#">
+
+
+                            <li style="border-bottom:inset;">
+                                <a href="javascript:void(0);" class="menu-toggle">
                                     <i class="material-icons">list_alt</i>
                                     <span>مدیریت کاروان</span>
                                 </a>
+                                <ul class="ml-menu">
+                                    <li :class="{ activeMenuToggle: isActivePanel('show-all-users-info') }">
+                                        <a @click.prevent="showAllUsersInfo(1)" href="#">اطلاعات اعضا</a>
+                                    </li>
+
+                                    <li :class="{ activeMenuToggle: isActivePanel('karavan-managers') }">
+                                        <a @click.prevent="showKaravanManagers(1)" href="#">اطلاعات مدیران</a>
+                                    </li>
+                                    <li :class="{ activeMenuToggle: isActivePanel('add-user-to-karavan') }">
+                                        <a @click.prevent="addUserToKaravan" href="#">افزودن عضو</a>
+                                    </li>
+                                    <li :class="{ activeMenuToggle: isActivePanel('add-manager-to-karavan') }">
+                                        <a @click.prevent="addManagerToKaravan" href="#">افزودن مدیر</a>
+                                    </li>
+                                    <li>
+                                        <a @click.prevent="addEventToKaravan" href="#">افزودن رویداد</a>
+                                    </li>
+                                </ul>
                             </li>
+
                             <li style="border-bottom:inset;">
                                 <a @click.prevent="addKaravan" href="#">
                                     <i class="material-icons">groups_3</i>
                                     <span>افزودن کاروان</span>
                                 </a>
                             </li>
-                            <li :class="{ active: isActivePanel('add-user-to-karavan') }" style="border-bottom:inset;">
-                                <a @click.prevent="addUserToKaravan" href="#">
-                                    <i class="material-icons">person_add</i>
-                                    <span>افزودن عضو به کاروان</span>
+                            <li :class="{ active: isActivePanel('received-messages') }" style="border-bottom:inset;">
+                                <a @click.prevent="receivedMessages(1)" href="#">
+                                    <i class="material-icons">sms</i>
+                                    <span>پیام های دریافتی</span>
                                 </a>
                             </li>
                             <li :class="{ active: isActivePanel('souvenir-photos') }" style="border-bottom:inset;">
@@ -299,6 +323,146 @@
             <!-- #END# Manager dashboard -->
 
 
+
+            <!-- Received messages -->
+            <section v-show="manager_panel == 'received-messages'" class="content">
+                <div class="container-fluid">
+
+                    <div v-if="manager_panel == 'received-messages'" class="col-sm-3" style="margin-top:-15px; margin-bottom:10px;">
+                        <label for="category">کاروان مورد نظر را انتخاب کنید</label>
+                        <select class="form-control" v-model="selected_karavan_uuid" @change="changeSelectedKaravan">
+                            <option value="">انتخاب کاروان</option>
+                            <option v-for="karavan in manager_karavans_info" :value=karavan[0] >${karavan[1]}$</option>
+                        </select>
+                    </div>
+
+                    <div v-if="selected_karavan_uuid !=''" class="row clearfix">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <div class="card">
+
+                                <div v-if="manager_panel == 'received-messages'" style="padding-bottom: 130px;">
+                                    <div class=" col-sm-12" style="margin-top:15px;">
+                                        <h3 class="col-sm-8">
+                                            پیام های دریافتی
+                                        </h3>
+                                        <div class="col-md-4" style="margin-top: 10px;">
+                                            <div class="input-group">
+                                                <div class="form-line">
+                                                    <input @keyup.enter="onClick_search()" type="text" class="form-control date" v-model="search_bar_val" placeholder="جستجو براساس نام یا نام کاربری ...">
+                                                </div>
+                                                <span @click.prevent="onClick_search()" class="input-group-addon">
+                                                    <i class="material-icons" style="font-size:25px;">search</i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-8"></div>
+                                    <div class="col-sm-3" style="margin-bottom: -20px;">
+                                        <label for="category">فیلتر زمان</label>
+                                        <select class="form-control" v-model="selected_time" @change="getSouvenirPhotos(1)">
+                                            <option value="all">همه</option>
+                                            <option value="today">امروز</option>
+                                            <option value="week">این هفته</option>
+                                            <option value="month">این ماه</option>
+                                            <option value="year">امسال</option>
+                                        </select>
+                                        </select>
+                                    </div>
+
+                                </div>
+
+                                <div class="body">
+
+                                    <!-- Nav tabs -->
+                                    <ul class="nav nav-tabs" role="tablist" >
+                                        <li role="presentation" class="active">
+                                            <a href="#unread_messages" data-toggle="tab">
+                                                <i class="material-icons">mark_email_unread</i> پیام های جدید
+                                            </a>
+                                        </li>
+                                        <li role="presentation">
+                                            <a href="#read_messages" data-toggle="tab">
+                                                <i class="material-icons">mark_email_read</i> پیام های خوانده شده                                                
+                                            </a>
+                                        </li>
+                                    </ul>
+
+                                    <!-- Tab panes -->
+                                    <div class="tab-content" style="padding-top: 30px !important;">
+                                        
+                                        <div role="tabpanel" class="tab-pane fade in active" id="unread_messages" style="padding-bottom:28px;">
+                                            <div class="row">
+                                                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                                                    <div class="card">
+                                                        <div class="header bg-blue-grey" style="padding:15px;">
+                                                            <h2 style="font-size:16px">
+                                                                <b>محمد اقلیما</b>
+                                                                <small>m_eghlima8</small>
+                                                            </h2>
+                                                            <ul class="header-dropdown m-r--5">
+                                                                <li>
+                                                                    <a data-toggle="tooltip" title="تغییر به حالت خوانده شده" class="lever" href="javascript:void(0);">
+                                                                        <i style="font-size:30px; border-radius:25%; background-color:rgb(75 177 152);" class="material-icons">done_all</i>
+                                                                    </a>
+                                                                </li>
+                                                            </ul>
+                                                            <small>1402-04-01 | 11:24:56</small>
+                                                        </div>
+                                                        <div class="body">
+                                                            متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یکیکیکسیبذرزثفعهح
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div style="padding-bottom: 40px;" role="tabpanel" class="tab-pane fade" id="read_messages">
+                                            <div class="row">
+                                                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                                                    <div class="card">
+                                                        <div class="header bg-blue-grey" style="padding:15px;">
+                                                            <h2>
+                                                                محمد اقلیما <small>m_eghlima8</small>
+                                                            </h2>
+                                                            <ul class="header-dropdown m-r--5">
+                                                                <li>
+                                                                    <a data-toggle="tooltip" title="تغییر به حالت خوانده نشده" class="lever" href="javascript:void(0);">
+                                                                        <i style="font-size:30px; border-radius:25%; background-color:rgb(75 177 152);" class="material-icons">mark_email_unread</i>
+                                                                    </a>
+                                                                </li>
+                                                            </ul>
+                                                            <small>1402-04-01 | 11:24:56</small>
+                                                        </div>
+                                                        <div class="body">
+                                                            متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یکیکیکسیبذرزثفعهح
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <!--
+                                    <div class="pagination">
+                                        <a v-for="(page_num,index) in pages"
+                                            :key="index"
+                                            @click.prevent="getSouvenirPhotos(index + 1)"
+                                            :class="{ active: isActivePage(index + 1) }" 
+                                            href="#">${ page_num }$</a>
+                                    </div>
+                                    -->
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- #END# Received messages -->
+
+
             <!-- Show all users info -->
             <section v-if="manager_panel == 'show-all-users-info'" class="content">
                 <div class="container-fluid">
@@ -316,12 +480,12 @@
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                             <div class="card">
                                 <div class="header col-sm-12" style="margin-bottom: 20px;">
+
                                     <h3 class="col-sm-8">
                                         مدیریت کاروان
                                     </h3>
                                     <div class="col-md-4">
-
-                                        <div class="input-group">
+                                        <div class="input-group" style="margin-bottom:10px; margin-top:15px;">
                                             <div class="form-line">
                                                 <input @keyup.enter="onClick_search()" type="text" class="form-control date" v-model="search_bar_val" placeholder="جستجو براساس نام یا نام کاربری ...">
                                             </div>
@@ -329,9 +493,8 @@
                                                 <i class="material-icons" style="font-size:25px;">search</i>
                                             </span>
                                         </div>
-
-                                        <button @click.prevent="addEventToKaravan()" style="padding:3px 25px; float:left;" type="button" class="btn bg-blue waves-effect">افزودن رویداد</button>
                                     </div>
+
                                 </div>
                                 <div class="body">
 
@@ -400,10 +563,10 @@
                                         </br>
                                         </br>
                                     </div>
-                                    <div v-if="selected_karavan_uuid != ''" class="pagination">
+                                    <div class="pagination">
                                         <a v-for="(page_num,index) in pages"
                                             :key="index"
-                                            @click.prevent="showAllUsersInfo(index + 1)"
+                                            @click.prevent="showKaravanManagers(index + 1)"
                                             :class="{ active: isActivePage(index + 1) }" 
                                             href="#">${ page_num }$</a>
                                     </div>
@@ -415,6 +578,69 @@
                 </div>
             </section>
             <!-- #END# show all users info -->
+
+
+            <!-- Show karavan managers info -->
+            <section v-if="manager_panel == 'karavan-managers'" class="content">
+                <div class="container-fluid">
+
+                    <div class="col-sm-3" style="margin-top:-15px; margin-bottom:10px;">
+                        <label for="category">کاروان مورد نظر را انتخاب کنید</label>
+                        <select class="form-control" v-model="selected_karavan_uuid" @change="changeSelectedKaravan">
+                            <option value="">انتخاب کاروان</option>
+                            <option v-for="karavan in manager_karavans_info" :value=karavan[0] >${karavan[1]}$</option>
+                        </select>
+                    </div>
+
+                    <!-- Basic Examples -->
+                    <div v-if="selected_karavan_uuid !=''" class="row clearfix">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <div class="card">
+                                <div class="header col-sm-12" style="margin-bottom: 20px;">
+
+                                    <h3 class="col-sm-8">
+                                        لیست مدیران کاروان
+                                    </h3>
+
+                                </div>
+                                <div class="body">
+
+                                    <div class="table-responsive">
+                                        <table id="karavan_managers_table" class="table table-bordered table-striped table-hover js-basic-example dataTable" style="width:75%">
+                                            <thead>
+                                                <tr>
+                                                    <th>نام</th>
+                                                    <th>نام کاربری</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="manager in karavan_managers">
+                                                    <td>${ manager[0] }$</td>
+                                                    <td>${ manager[1] }$</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        </br>
+                                        </br>
+                                        </br>
+                                    </div>
+                                    <div class="pagination">
+                                        <a v-for="(page_num,index) in pages"
+                                            :key="index"
+                                            @click.prevent="showKaravanManagers(index + 1)"
+                                            :class="{ active: isActivePage(index + 1) }" 
+                                            href="#">${ page_num }$</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- #END# Basic Examples -->
+                </div>
+            </section>
+
+            <!-- #END# show karavan managers info -->
+
 
 
             <!-- Edit user info -->
@@ -575,7 +801,6 @@
                                         </br>
                                     </div>
 
-
                                     <!-- show all users souvenir album -->
                                     <div v-show="show_all_users_souvenir_album == true" id="lightgallery" class="list-unstyled row clearfix">
 
@@ -610,7 +835,6 @@
                             </div>
                         </div>
                     </div>
-
 
                 </div>
             </section>
@@ -810,7 +1034,7 @@
                                 <div class="body">
 
                                     <!-- Nav tabs -->
-                                    <ul class="nav nav-tabs" role="tablist">
+                                    <ul class="nav nav-tabs" role="tablist" style="display:flex; justify-content:center;">
                                         <li role="presentation" class="active">
                                             <a href="#home_with_icon_title" data-toggle="tab">
                                                 <i class="material-icons">edit</i> وارد کردن دستی اطلاعات
@@ -825,10 +1049,10 @@
 
                                     <!-- Tab panes -->
                                     <div class="tab-content" style="padding-top: 30px !important;">
-                                        <div role="tabpanel" class="tab-pane fade in active" id="home_with_icon_title">
+                                        <div role="tabpanel" class="tab-pane fade in active" id="home_with_icon_title" style="padding-bottom:28px;">
                                             <h4>وارد کردن دستی اطلاعات</h4>
                                             </br>
-                                            <div class="row clearfix" style="margin-bottom: 150px;">
+                                            <div class="row clearfix" >
                                                 <div class="col-md-3">
                                                     <div class="input-group input-group-lg">
                                                         <span class="input-group-addon">
@@ -859,10 +1083,8 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-2">
-                                                    <button @click.prevent="sendUserInfoToAddToKaravan('input')" style="padding:5px 40px;" type="button" class="btn btn-success waves-effect">افزودن</button>
-                                                </div>
                                             </div>
+                                            <button @click.prevent="sendUserInfoToAddToKaravan('input')" style="padding:5px 40px;" type="button" class="btn btn-success waves-effect">افزودن</button>
                                         </div>
 
                                         <div style="padding-bottom: 40px;" role="tabpanel" class="tab-pane fade" id="profile_with_icon_title">
@@ -878,15 +1100,15 @@
                                                 <input style="margin-top:20px; margin-bottom:20px;" type="file" accept=".csv" @change="handleExcelFile">
                                             </form>
         
-                                            <div class="col-md-3" style="margin-right: -15px;">
+                                            <div class="col-md-3" style="margin-right: -15px; width:17%;">
                                                 <button @click.prevent="sendUserInfoToAddToKaravan('file')" style="padding:5px 40px;" type="button" class="btn btn-success waves-effect">ارسال فایل</button>
                                             </div>
-        
+                                            <div class="col-md-3" style="margin-right: -15px; width:17%;">
+                                                <button @click.prevent="change_panel('manager','show-all-users-info')" style="padding:5px 40px; margin-right:20px;" type="button" class="btn btn-danger waves-effect">بازگشت</button>
+                                            </div>
+
                                         </div>
                                     </div>
-
-
-
 
                                 </div>
                             </div>
@@ -921,6 +1143,9 @@
 
     <!-- Waves Effect Plugin Js -->
     <script src="../static/scripts/waves.js"></script>
+
+    <!-- Wait Me Plugin Js -->
+    <script src="../static/scripts/waitMe.js"></script>
     
     <!-- Main Jquery DataTable Plugin Js -->
     <script src="../static/scripts/jquery.dataTables.js"></script>
@@ -946,7 +1171,8 @@
     <script src="../static/scripts/sign-in.js"></script>
     <script src="../static/scripts/sign-up.js"></script>
     <script src="../static/scripts/tooltips-popovers.js"></script>
-    
+    <script src="../static/scripts/colored.js"></script>
+
     <!-- Sweet Alert -->
     <script type="text/javascript" src="../static/scripts/sweetalert2.all.min.js"></script>
     

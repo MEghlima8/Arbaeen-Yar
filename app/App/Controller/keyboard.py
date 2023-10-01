@@ -15,7 +15,8 @@ reply_markup_cancel_help = InlineKeyboardMarkup(keyboard_cancel_help)
 
 keyboard_start_user = [
     [InlineKeyboardButton("ارسال موقعیت مکانی", callback_data="/send-my-location")],
-    [InlineKeyboardButton("ثبت عکس یادگاری", callback_data="/record-souvenir-photo")]
+    [InlineKeyboardButton("ثبت عکس یادگاری", callback_data="/record-souvenir-photo")],
+    [InlineKeyboardButton("ارسال پیام به مدیر کاروان", callback_data="/send-message")]
 ]
 reply_markup_start_user = InlineKeyboardMarkup(keyboard_start_user)
 

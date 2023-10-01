@@ -135,7 +135,6 @@ def get_karavan_general_info():
     res = web_process.karavan_general_info(karavan_uuid)    
     return res
     
-
 @app.route('/change-account-status', methods=['POST'])
 def change_account_status():
     j_body_data = request.get_json()
@@ -166,18 +165,6 @@ def get_karavans_name():
     return resp
 
 
-@app.route('/get-karavan-users-info', methods=['POST'])
-def get_karavan_users_info():
-    j_body_data = request.get_json()
-    res = db.db.getAllKaravanUsersInfo(j_body_data['karavan_uuid'], j_body_data['search_value'])
-
-    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
-    result = {"status-code":200 , "result":page_items,
-              "count_pages":count_all_pages, "active_page":j_body_data["karavan_uuid"]
-              }
-    return result 
-
-
 @app.route('/get-souvenir-photos', methods=['POST'])
 def get_souvenir_photos():
     j_body_data = request.get_json()
@@ -189,7 +176,64 @@ def get_souvenir_photos():
     
     page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
     result = {"status-code":200 , "result":page_items, "events":events ,
-              "count_pages":count_all_pages, "active_page":j_body_data["karavan_uuid"]
+              "count_pages":count_all_pages
+              }
+    return result
+
+
+@app.route('/get-karavan-users-info', methods=['POST'])
+def get_karavan_users_info():
+    j_body_data = request.get_json()
+    res = db.db.getAllKaravanUsersInfo(j_body_data['karavan_uuid'], j_body_data['search_value'])
+
+    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
+    result = {"status-code":200 , "result":page_items,
+              "count_pages":count_all_pages
+              }
+    return result 
+
+
+@app.route('/get-karavan-managers', methods=['POST'])
+def get_karavan_managers():
+    managers_info = []
+    j_body_data = request.get_json()
+    managers_uuid = db.db.getAllKaravanManagersUuid(j_body_data['karavan_uuid'])
+    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],managers_uuid)
+    
+    for manager_uuid in page_items:
+        info = db.db.getManagerInfo(list(manager_uuid.keys())[0])[0]
+        managers_info.append(info)
+        
+    result = {"status-code":200 , "result":managers_info,
+              "count_pages":count_all_pages
+              }
+    return result 
+
+
+@app.route('/add-manager-to-karavan', methods=['POST'])
+def add_manager_to_karavan():
+    karavan_uuid = request.get_json()['karavan_uuid']
+    manager_username = request.get_json()['input_manager_username']
+    
+    manager_uuid = db.db.getManagerUUID(manager_username)
+    if (manager_uuid is None):
+        result = {"status-code":400 , "result":'There is no manager with this username'}
+    else:
+        db.db.AddManagerToKaravan(karavan_uuid, manager_uuid[0], manager_username)
+        result = {"status-code":200 , "result":'Manager added was successfully'}    
+    return result
+
+    
+
+@app.route('/get-karavan-messages', methods=['POST'])
+def get_karavan_messages():
+    j_body_data = request.get_json()
+    res = db.db.getKaravanRequestInfo(j_body_data['karavan_uuid'], '/send-messages', j_body_data['search_value'])
+    res = web_process.handleResultByTime(res,j_body_data['time'])
+
+    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
+    result = {"status-code":200 , "result":page_items,
+              "count_pages":count_all_pages
               }
     return result
 
@@ -212,7 +256,7 @@ def get_registered_locations():
         result = {"status-code":204 , "result":'Without registered location'}
     else:
         result = {"status-code":200 , "result":page_items,
-                  "count_pages":count_all_pages, "active_page":j_body_data["karavan_uuid"]
+                  "count_pages":count_all_pages
                   }
     return result 
 

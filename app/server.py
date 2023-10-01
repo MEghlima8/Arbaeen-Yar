@@ -26,7 +26,7 @@ async def cancel(_update, context, _text, _STEP, chat_id):
     elif account_status[0][0] and account_status[0][1]['status']=='true':
         await context.bot.send_message(chat_id, text='بازگشت به صفحه اصلی انجام شد \nیکی از گزینه های زیر را انتخاب کنید', reply_markup=reply_markup_start_user)
         db.db.changeUserSTEP('home', chat_id)
-        
+  
 
 # Start bot
 async def start(_update, context, _text, _STEP, chat_id):
@@ -60,6 +60,8 @@ commands = [
     
     [r"/record-souvenir-photo", r".+", bot_process.record_souvenir_photo],
     
+    [r"/send-message", r".+", bot_process.send_message],
+    
     [r".", r"handle-photo-event", bot_process.handle_photo_event],
     
     [r".+", r"get-user-username-to-signin", bot_process.get_user_username_to_signin],
@@ -68,6 +70,9 @@ commands = [
     [r".+", r"get-user-location", bot_process.get_user_location],
     
     [r".+", r"handle-record-souvenir-photo", bot_process.handle_record_souvenir_photo],
+    
+    [r".+", r"handle-send-message", bot_process.handle_send_messsage],
+    
 ]
 
 
