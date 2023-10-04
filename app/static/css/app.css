@@ -11,6 +11,15 @@
   text-align: center;
 }
 
+#karavans_list_table thead tr th{
+  text-align: center;
+}
+
+#karavan_users_table thead tr th{
+  text-align: center;
+}
+
+
 #map {     
   height: 230px; 
   width: 270px;

@@ -92,49 +92,57 @@ def convert_add_user_error_to_persian(error):
             return 'نام کاربری فقط می تواند شامل حروف کوچک و بزرگ انگلیسی و اعداد و نقطه و زیرخط(آندرلاین) باشد'
 
 
-def karavan_general_info(karavan_uuid):
-    count_karavan_users_account_status = db.db.countKaravanUsersAccountStatus(karavan_uuid)
-    count_karavan_reqs_type = db.db.countKaravanReqsType(karavan_uuid)
-    
-    if len(count_karavan_users_account_status) == 0 :
+def calc_general_info(count_users_account_status, count_reqs_type):
+    if len(count_users_account_status) == 0 :
         noactive = ('noactive',0)
         active = ('active',0)
-    elif len(count_karavan_users_account_status) == 1 :
+    elif len(count_users_account_status) == 1 :
         
-        if count_karavan_users_account_status[0][0] == 'false':
-            noactive = count_karavan_users_account_status[0]
+        if count_users_account_status[0][0] == 'false':
+            noactive = count_users_account_status[0]
             active = ('active',0)
-        else:
-            active = count_karavan_users_account_status[0]
+        elif count_users_account_status[0][0] == 'true':
+            active = count_users_account_status[0]
             noactive = ('noactive',0)
+        else:
+            noactive = ('noactive',0)
+            active = ('active',0)    
+                    
     else:
         
-        if count_karavan_users_account_status[0][0] == 'false':
-            noactive = count_karavan_users_account_status[0]
-            active = count_karavan_users_account_status[1]
+        if count_users_account_status[0][0] == 'false':
+            noactive = count_users_account_status[0]
+            active = count_users_account_status[1]
+        elif count_users_account_status[0][0] == 'true':
+            active = count_users_account_status[0]
+            noactive = count_users_account_status[1]
         else:
-            active = count_karavan_users_account_status[0]
-            noactive = count_karavan_users_account_status[1]
+            if count_users_account_status[1][0] == 'false':
+                noactive = count_users_account_status[1]
+                active = count_users_account_status[2]
+            elif count_users_account_status[1][0] == 'true':
+                noactive = count_users_account_status[2]
+                active = count_users_account_status[1]
 
-    if len(count_karavan_reqs_type) == 0 :
+    if len(count_reqs_type) == 0 :
         souvenir_photo = ('/souvenir-photo', 0)
         location = ('/send-my-location', 0)        
-    elif len(count_karavan_reqs_type) == 1 :
+    elif len(count_reqs_type) == 1 :
         
-        if count_karavan_reqs_type[0][0] == '/souvenir-photo':
-            souvenir_photo = count_karavan_reqs_type[0]
+        if count_reqs_type[0][0] == '/souvenir-photo':
+            souvenir_photo = count_reqs_type[0]
             location = ('/send-my-location', 0)
         else:
             souvenir_photo = ('/souvenir-photo', 0)
-            location = count_karavan_reqs_type[0]
+            location = count_reqs_type[0]
     else:
         
-        if count_karavan_reqs_type[0][0] == '/souvenir-photo':
-            souvenir_photo = count_karavan_reqs_type[0]
-            location = count_karavan_reqs_type[1]
+        if count_reqs_type[0][0] == '/souvenir-photo':
+            souvenir_photo = count_reqs_type[0]
+            location = count_reqs_type[1]
         else:
-            location = count_karavan_reqs_type[0]
-            souvenir_photo = count_karavan_reqs_type[1]
+            location = count_reqs_type[0]
+            souvenir_photo = count_reqs_type[1]
                 
     res = {'account': {
                         'active': active[1],
@@ -147,6 +155,20 @@ def karavan_general_info(karavan_uuid):
         "status-code":200
         }
     return res
+
+
+def karavan_general_info(karavan_uuid):
+    count_karavan_users_account_status = db.db.countKaravanUsersAccountStatus(karavan_uuid)
+    count_karavan_reqs_type = db.db.countKaravanReqsType(karavan_uuid)
+    calc = calc_general_info(count_karavan_users_account_status, count_karavan_reqs_type)
+    return calc
+
+
+def admin_general_info():
+    count_admin_users_account_status = db.db.countAdminUsersAccountStatus()
+    count_admin_reqs_type = db.db.countAdminReqsType()
+    calc = calc_general_info(count_admin_users_account_status, count_admin_reqs_type)
+    return calc
 
 
 def add_event_to_karavan(karavan_uuid, event_name):

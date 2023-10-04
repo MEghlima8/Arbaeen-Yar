@@ -30,6 +30,7 @@ CREATE TABLE karavan (
     FOREIGN KEY(manager_uuid) REFERENCES users(uuid)
 );
 
+
 CREATE TABLE karavan_users (
     counter SERIAL ,
     uuid VARCHAR(255) PRIMARY KEY ,

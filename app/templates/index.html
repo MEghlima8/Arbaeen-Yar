@@ -56,7 +56,6 @@
 <body class="theme-teal">    
 
     <div id="app">
-
         
         <!-- Page Loader -->
         <div class="page-loader-wrapper">
@@ -163,6 +162,302 @@
         </div>
         <!-- Signup panel -->
 
+
+
+        
+        <!-- admin panel -->
+        <div v-show="panel == 'admin'">
+
+            <!-- Top Bar -->
+            <nav class="navbar">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <b> <a class="navbar-brand" href="#">پنل مدیریت </a> </b>
+                    </div>
+                </div>
+            </nav>
+            <!-- #Top Bar -->
+            
+            <!-- Right Sidebar -->
+            <section>
+                <aside id="leftsidebar" class="sidebar">
+                    <!-- Menu -->
+                    <div class="menu">
+                        <ul class="list">
+                            <li class="header">ناوبری اصلی</li>
+                            <li :class="{ active: isActivePanel('admin-dashboard') }" style="border-bottom:inset;">
+                                <a @click.prevent="getAdminDashboardInfo" href="#">
+                                    <i class="material-icons">home</i>
+                                    <span>صفحه اصلی</span>
+                                </a>
+                            </li>
+
+
+                            <li :class="{ active: isActivePanel('admin-karavans-list') }" style="border-bottom:inset;">
+                                <a @click.prevent="getAdminKaravansList(1)" href="#" >
+                                    <i class="material-icons">list_alt</i>
+                                    <span>لیست کاروان ها</span>
+                                </a>
+                            </li>
+
+                            <li :class="{ active: isActivePanel('admin-managers-list') }" style="border-bottom:inset;">
+                                <a @click.prevent="getAdminManagersList(1)" href="#">
+                                    <i class="material-icons">groups_3</i>
+                                    <span>لیست مدیران</span>
+                                </a>
+                            </li>
+
+                            <li :class="{ active: isActivePanel('admin-users-list') }" style="border-bottom:inset;">
+                                <a @click.prevent="getAdminUsersList(1)" href="#">
+                                    <i class="material-icons">group</i>
+                                    <span>لیست همه اعضا</span>
+                                </a>
+                            </li>
+
+                        </ul>
+                    </div>
+                    <!-- #Menu -->
+                </aside>
+            </section>
+            <!-- #END# Right Sidebar -->
+
+            <!-- Admin dashboard -->
+            <section v-if="manager_panel == 'admin-dashboard'" class="content">
+                <div class="container-fluid">
+
+                    <!-- Basic Examples -->
+                    <div class="row clearfix">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <div class="card">
+
+                                <div class="header">
+                                    <h4>آمار کل</h4>
+                                </div>
+
+                                <div class="body" style="height: 500px;">
+                                    <div class="col-md-1"></div>
+                                    
+                                    <div class="col-md-4 info-box bg-green hover-zoom-effect">
+                                        <div class="icon">
+                                            <i class="material-icons">photo_library</i>
+                                        </div>
+                                        <div class="content">
+                                            <div class="text">تعداد عکس های یادگاری</div>
+                                            <div class="number count-to">${ count_karavan_souvenir_photos }$</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-2"></div>
+
+                                    <div class="col-md-4 info-box bg-orange hover-zoom-effect">
+                                        <div class="icon">
+                                            <i class="material-icons">location_on</i>
+                                        </div>
+                                        <div class="content">
+                                            <div class="text">تعداد موقعیت های مکانی</div>
+                                            <div class="number count-to">${ count_karavan_locations }$</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-1"></div>
+
+                                    <div class="col-md-12">
+                                        <div id="donut_chart" class="graph"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- #END# Basic Examples -->
+                </div>
+
+            </section>
+            <!-- #END# Admin dashboard -->
+
+
+            <!-- Admin get karavans list -->
+            <section v-if="manager_panel == 'admin-karavans-list'" class="content">
+                <div class="container-fluid">
+
+                    <!-- Basic Examples -->
+                    <div class="row clearfix">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <div class="card">
+                                
+                                <div class="header" style="padding-bottom: 100px;">
+                                    <div class=" col-sm-12" style="margin-bottom: 20px;">
+                                        <h3 class="col-sm-8">
+                                            لیست همه ی کاروان ها
+                                        </h3>
+                                    </div>
+                                </div>
+
+                                <div class="body">
+                                    <div class="table-responsive">
+                                        
+                                        <table id="karavans_list_table" class="table table-bordered table-striped table-hover js-basic-example dataTable">
+                                            <thead>
+                                                <tr >
+                                                    <th>نام کاروان</th>
+                                                    <th>نام و نام خانوادگی مدیر</th>
+                                                    <th>نام کاربری مدیر</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="karavan in karavans_list">
+                                                    <td>${ karavan[0] }$</td>
+                                                    <td>${ karavan[1] }$</td>
+                                                    <td>${ karavan[2] }$</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        </br>
+                                        </br>
+                                        </br>
+                                    </div>
+
+                                    <div class="pagination">
+                                        <a v-for="(page_num,index) in pages"
+                                            :key="index"
+                                            @click.prevent="getAdminKaravansList(index + 1)"
+                                            :class="{ active: isActivePage(index + 1) }"
+                                            href="#">${ page_num }$</a>
+                                    </div>
+                                                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- #END# Basic Examples -->
+                </div>
+            </section>
+            <!-- #END# Admin get karavans list -->
+
+
+            <!-- Show admin managers info -->
+            <section v-if="manager_panel == 'admin-managers-list'" class="content">
+                <div class="container-fluid">
+
+                    <!-- Basic Examples -->
+                    <div class="row clearfix">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <div class="card">
+                                <div class="header col-sm-12" style="margin-bottom: 20px;">
+
+                                    <h3 class="col-sm-8">
+                                        لیست مدیران
+                                    </h3>
+
+                                </div>
+                                <div class="body">
+
+                                    <div class="table-responsive">
+                                        <table id="karavan_managers_table" class="table table-bordered table-striped table-hover js-basic-example dataTable" style="width:75%">
+                                            <thead>
+                                                <tr>
+                                                    <th>نام و نام خانوادگی</th>
+                                                    <th>نام کاربری</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="manager in managers_list">
+                                                    <td>${ manager[0] }$</td>
+                                                    <td>${ manager[1] }$</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        </br>
+                                        </br>
+                                        </br>
+                                    </div>
+                                    <div class="pagination">
+                                        <a v-for="(page_num,index) in pages"
+                                            :key="index"
+                                            @click.prevent="getAdminManagersList(index + 1)"
+                                            :class="{ active: isActivePage(index + 1) }" 
+                                            href="#">${ page_num }$</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- #END# Basic Examples -->
+                </div>
+            </section>
+            <!-- #END# show admin managers info -->
+
+
+            <!-- Show admin users info -->
+            <section v-if="manager_panel == 'admin-users-list'" class="content">
+                <div class="container-fluid">
+
+                    <!-- Basic Examples -->
+                    <div class="row clearfix">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <div class="card">
+                                <div class="header col-sm-12" style="margin-bottom: 20px;">
+
+                                    <h3 class="col-sm-8">
+                                        لیست همه اعضا
+                                    </h3>
+
+                                </div>
+                                <div class="body">
+
+                                    <div class="table-responsive">
+                                        <table id="karavan_users_table" class="table table-bordered table-striped table-hover js-basic-example dataTable" style="width:75%">
+                                            <thead>
+                                                <tr>
+                                                    <th>نام و نام خانوادگی</th>
+                                                    <th>نام کاربری</th>
+                                                    <th>زمان ساخت حساب</th>
+                                                    <th>زمان فعال شدن حساب</th>
+                                                    <th>آخرین فعالیت</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="user in users_info">
+                                                    <td>${ user[0] }$</td>
+                                                    <td>${ user[1] }$</td>
+                                                    <td>${ user[2]['created']['time'] }$ | ${ user[2]['created']['date'] }$</td>
+
+                                                    <td v-if="user[2]['status'] != 'false'">
+                                                        <i class="material-icons" style="vertical-align: middle;">done</i>
+                                                        ${ user[2]['time'] }$ | ${ user[2]['date'] }$
+                                                    </td>
+                                                    <td v-else>-</td>
+
+                                                    <td v-if="user[3] == null">بدون فعالیت</td>
+                                                    <td v-else>${ user[3]['time'] }$ | ${ user[3]['date'] }$</td>  
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        </br>
+                                        </br>
+                                        </br>
+                                    </div>
+                                    <div class="pagination">
+                                        <a v-for="(page_num,index) in pages"
+                                            :key="index"
+                                            @click.prevent="getAdminUsersList(index + 1)"
+                                            :class="{ active: isActivePage(index + 1) }" 
+                                            href="#">${ page_num }$</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- #END# Basic Examples -->
+                </div>
+            </section>
+            <!-- #END# show admin users info -->
+
+
+        </div>
+        <!-- #END# admin panel -->
+
+
+
         
         <!-- manager panel -->
         <div v-show="panel == 'manager'">
@@ -208,19 +503,34 @@
                                     <span>مدیریت کاروان</span>
                                 </a>
                                 <ul class="ml-menu">
-                                    <li :class="{ activeMenuToggle: isActivePanel('show-all-users-info') }">
-                                        <a @click.prevent="showAllUsersInfo(1)" href="#">اطلاعات اعضا</a>
+                                    <li>
+                                        <a href="javascript:void(0);" class="menu-toggle">
+                                            <span>اعضا</span>
+                                        </a>
+                                        <ul class="ml-menu">
+                                            <li :class="{ activeMenuToggle: isActivePanel('show-all-users-info') }">
+                                                <a @click.prevent="showAllUsersInfo(1)" href="#">اطلاعات اعضا</a>
+                                            </li>
+                                            <li :class="{ activeMenuToggle: isActivePanel('add-user-to-karavan') }">
+                                                <a @click.prevent="addUserToKaravan" href="#">افزودن عضو</a>
+                                            </li>
+                                        </ul>
                                     </li>
 
-                                    <li :class="{ activeMenuToggle: isActivePanel('karavan-managers') }">
-                                        <a @click.prevent="showKaravanManagers(1)" href="#">اطلاعات مدیران</a>
+                                    <li>
+                                        <a href="javascript:void(0);" class="menu-toggle">
+                                            <span>مدیران</span>
+                                        </a>
+                                        <ul class="ml-menu">
+                                            <li :class="{ activeMenuToggle: isActivePanel('karavan-managers') }">
+                                                <a @click.prevent="showKaravanManagers(1)" href="#">اطلاعات مدیران</a>
+                                            </li>
+                                            <li :class="{ activeMenuToggle: isActivePanel('add-manager-to-karavan') }">
+                                                <a @click.prevent="addManagerToKaravan" href="#">افزودن مدیر</a>
+                                            </li>
+                                        </ul>
                                     </li>
-                                    <li :class="{ activeMenuToggle: isActivePanel('add-user-to-karavan') }">
-                                        <a @click.prevent="addUserToKaravan" href="#">افزودن عضو</a>
-                                    </li>
-                                    <li :class="{ activeMenuToggle: isActivePanel('add-manager-to-karavan') }">
-                                        <a @click.prevent="addManagerToKaravan" href="#">افزودن مدیر</a>
-                                    </li>
+
                                     <li>
                                         <a @click.prevent="addEventToKaravan" href="#">افزودن رویداد</a>
                                     </li>
@@ -234,7 +544,7 @@
                                 </a>
                             </li>
                             <li :class="{ active: isActivePanel('received-messages') }" style="border-bottom:inset;">
-                                <a @click.prevent="receivedMessages(1)" href="#">
+                                <a @click.prevent="receivedMessages(1,'unread')" href="#">
                                     <i class="material-icons">sms</i>
                                     <span>پیام های دریافتی</span>
                                 </a>
@@ -360,7 +670,7 @@
                                     <div class="col-sm-8"></div>
                                     <div class="col-sm-3" style="margin-bottom: -20px;">
                                         <label for="category">فیلتر زمان</label>
-                                        <select class="form-control" v-model="selected_time" @change="getSouvenirPhotos(1)">
+                                        <select class="form-control" v-model="selected_time" @change="receivedMessages(1)">
                                             <option value="all">همه</option>
                                             <option value="today">امروز</option>
                                             <option value="week">این هفته</option>
@@ -376,12 +686,12 @@
 
                                     <!-- Nav tabs -->
                                     <ul class="nav nav-tabs" role="tablist" >
-                                        <li role="presentation" class="active">
+                                        <li @click.prevent="receivedMessages(1,'unread')" role="presentation" class="active">
                                             <a href="#unread_messages" data-toggle="tab">
                                                 <i class="material-icons">mark_email_unread</i> پیام های جدید
                                             </a>
                                         </li>
-                                        <li role="presentation">
+                                        <li @click.prevent="receivedMessages(1,'read')" role="presentation">
                                             <a href="#read_messages" data-toggle="tab">
                                                 <i class="material-icons">mark_email_read</i> پیام های خوانده شده                                                
                                             </a>
@@ -393,49 +703,53 @@
                                         
                                         <div role="tabpanel" class="tab-pane fade in active" id="unread_messages" style="padding-bottom:28px;">
                                             <div class="row">
-                                                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+
+                                                <div v-for="message in messages" class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
                                                     <div class="card">
                                                         <div class="header bg-blue-grey" style="padding:15px;">
                                                             <h2 style="font-size:16px">
-                                                                <b>محمد اقلیما</b>
-                                                                <small>m_eghlima8</small>
+                                                                <b>${message[0]}$</b>
+                                                                <small>${message[1]}$</small>
                                                             </h2>
                                                             <ul class="header-dropdown m-r--5">
-                                                                <li>
+                                                                <li @click.prevent="changeMsgStatus(message[2], 'read')">
                                                                     <a data-toggle="tooltip" title="تغییر به حالت خوانده شده" class="lever" href="javascript:void(0);">
                                                                         <i style="font-size:30px; border-radius:25%; background-color:rgb(75 177 152);" class="material-icons">done_all</i>
                                                                     </a>
                                                                 </li>
                                                             </ul>
-                                                            <small>1402-04-01 | 11:24:56</small>
+                                                            <small>${message[3]['date']}$ | ${message[3]['time']}$</small>
                                                         </div>
                                                         <div class="body">
-                                                            متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یکیکیکسیبذرزثفعهح
+                                                            ${message[4]['text']}$
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </div>                                               
+
                                             </div>
                                         </div>
 
                                         <div style="padding-bottom: 40px;" role="tabpanel" class="tab-pane fade" id="read_messages">
                                             <div class="row">
-                                                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+
+                                                <div v-for="message in messages" class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
                                                     <div class="card">
                                                         <div class="header bg-blue-grey" style="padding:15px;">
                                                             <h2>
-                                                                محمد اقلیما <small>m_eghlima8</small>
+                                                                <b>${message[0]}$</b>
+                                                                <small>${message[1]}$</small>
                                                             </h2>
                                                             <ul class="header-dropdown m-r--5">
-                                                                <li>
+                                                                <li @click.prevent="changeMsgStatus(message[2], 'unread')">
                                                                     <a data-toggle="tooltip" title="تغییر به حالت خوانده نشده" class="lever" href="javascript:void(0);">
                                                                         <i style="font-size:30px; border-radius:25%; background-color:rgb(75 177 152);" class="material-icons">mark_email_unread</i>
                                                                     </a>
                                                                 </li>
                                                             </ul>
-                                                            <small>1402-04-01 | 11:24:56</small>
+                                                            <small>${message[3]['date']}$ | ${message[3]['time']}$</small>
                                                         </div>
                                                         <div class="body">
-                                                            متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یک متن تست شماره یکیکیکسیبذرزثفعهح
+                                                            ${message[4]['text']}$
                                                         </div>
                                                     </div>
                                                 </div>
@@ -444,15 +758,13 @@
 
                                     </div>
 
-                                    <!--
                                     <div class="pagination">
                                         <a v-for="(page_num,index) in pages"
                                             :key="index"
-                                            @click.prevent="getSouvenirPhotos(index + 1)"
+                                            @click.prevent="receivedMessages(index + 1)"
                                             :class="{ active: isActivePage(index + 1) }" 
                                             href="#">${ page_num }$</a>
                                     </div>
-                                    -->
 
                                 </div>
                             </div>
@@ -638,9 +950,7 @@
                     <!-- #END# Basic Examples -->
                 </div>
             </section>
-
             <!-- #END# show karavan managers info -->
-
 
 
             <!-- Edit user info -->

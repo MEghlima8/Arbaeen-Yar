@@ -134,6 +134,48 @@ def get_karavan_general_info():
     karavan_uuid = request.get_json()['karavan_uuid']
     res = web_process.karavan_general_info(karavan_uuid)    
     return res
+
+@app.route('/admin-get-karavan-general-info', methods= ['POST'])
+def admin_get_karavan_general_info():
+    res = web_process.admin_general_info()   
+    return res
+
+@app.route('/admin-get-karavans-list', methods=['POST'])
+def admin_get_karavans_list():
+    res = []
+    j_body_data = request.get_json()
+    karavans_list = db.db.getKaravansList()
+    
+    for karavan in karavans_list:
+        fullname_username = db.db.getUserFullname(karavan[1])
+        res.append([karavan[0], fullname_username[0], fullname_username[1]])
+        
+    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
+    result = {"status-code":200 , "result":page_items, 
+              "count_pages":count_all_pages}
+    
+    return result
+
+
+@app.route('/admin-get-users-list', methods=['POST'])
+def admin_get_users_list():
+    j_body_data = request.get_json()
+    users_list = db.db.getAdminUsersList()
+    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],users_list)
+    result = {"status-code":200 , "result":page_items, 
+              "count_pages":count_all_pages}
+    return result
+
+
+@app.route('/admin-get-managers-list', methods=['POST'])
+def admin_get_managers_list():
+    j_body_data = request.get_json()
+    managers_list = db.db.getAdminManagersList()
+    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],managers_list)
+    result = {"status-code":200 , "result":page_items, 
+              "count_pages":count_all_pages}
+    
+    return result
     
 @app.route('/change-account-status', methods=['POST'])
 def change_account_status():
@@ -197,11 +239,16 @@ def get_karavan_users_info():
 def get_karavan_managers():
     managers_info = []
     j_body_data = request.get_json()
-    managers_uuid = db.db.getAllKaravanManagersUuid(j_body_data['karavan_uuid'])
-    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],managers_uuid)
+    managers_uuid = db.db.getAllKaravanManagersUuid(j_body_data['karavan_uuid'])[0]
     
-    for manager_uuid in page_items:
-        info = db.db.getManagerInfo(list(manager_uuid.keys())[0])[0]
+    managers_dict = []
+    for mng in managers_uuid:
+        managers_dict.append([mng,managers_uuid[mng]])    
+        
+    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],managers_dict)
+    
+    for manager in page_items:
+        info = db.db.getManagerInfo(manager[0])[0]
         managers_info.append(info)
         
     result = {"status-code":200 , "result":managers_info,
@@ -223,15 +270,30 @@ def add_manager_to_karavan():
         result = {"status-code":200 , "result":'Manager added was successfully'}    
     return result
 
+
+@app.route('/change-message-status', methods=['POST'])
+def change_message_status():
+    change_to = request.get_json()['changeTo']
+    msg_uuid = request.get_json()['message_uuid']
     
+    db.db.ChangeMsgStatus(msg_uuid, change_to)
+
+    result = {"status-code":200 , "result":'Message status changed successfully'}
+    return result
+  
 
 @app.route('/get-karavan-messages', methods=['POST'])
 def get_karavan_messages():
+    res_tab = []
     j_body_data = request.get_json()
-    res = db.db.getKaravanRequestInfo(j_body_data['karavan_uuid'], '/send-messages', j_body_data['search_value'])
-    res = web_process.handleResultByTime(res,j_body_data['time'])
+    res = db.db.getKaravanRequestInfo(j_body_data['karavan_uuid'], '/send-message', j_body_data['search_value'])
+    for i in range(len(res)):
+        if res[i][4]['status'] == j_body_data['tab']:
+            res_tab.append(res[i])
+        
+    res_time = web_process.handleResultByTime(res_tab,j_body_data['time'])
 
-    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res)
+    page_items,count_all_pages = get_items_from_offset(j_body_data['page_index'],res_time)
     result = {"status-code":200 , "result":page_items,
               "count_pages":count_all_pages
               }

@@ -92,6 +92,39 @@ class PostgreSQL:
         return text
 
 
+    def countAdminUsersAccountStatus(self):
+        query = """SELECT users.active->>'status', COUNT(*) AS count FROM users
+                    GROUP BY users.active->>'status';"""    
+        args = ()
+        res = self.execute_query(query,args).fetchall()
+        return res
+
+    def countAdminReqsType(self):
+        query = """SELECT type, COUNT(*) AS count FROM request
+                    WHERE status = 'done' GROUP BY type"""
+        args = ()
+        res = self.execute_query(query,args).fetchall()
+        return res
+
+    def getKaravansList(self):
+        query = "SELECT name,manager_uuid FROM karavan"
+        args = ()
+        res = self.execute_query(query,args).fetchall()
+        return res
+
+
+    def getAdminManagersList(self):
+        query = "SELECT fullname,username FROM users WHERE is_manager='true'"
+        args = ()
+        res = self.execute_query(query,args).fetchall()
+        return res
+
+    def getUserFullname(self,uuid):
+        query = "SELECT fullname,username FROM users WHERE uuid=%s"
+        args = (uuid,)
+        res = self.execute_query(query,args).fetchone()
+        return res
+
     def countKaravanUsersAccountStatus(self, karavan_uuid):
         query = """SELECT users.active->>'status', COUNT(*) AS count FROM users
                     INNER JOIN karavan_users ON users.uuid = karavan_users.user_uuid
@@ -334,6 +367,16 @@ class PostgreSQL:
         res = self.execute_query(query,args).fetchone()
         return res
     
+    
+    def getAdminUsersList(self):
+        query = """SELECT users.fullname, users.username, users.active,
+                users.last_activity FROM users 
+                WHERE users.is_user='true' ORDER BY users.counter ASC"""
+        args =()
+        info = self.execute_query(query,args).fetchall()
+        return info
+
+    
     def addEventToKaravan(self, karavan_uuid, event_name, random_uuid):
         x = f'{{"{event_name}": "{random_uuid}"}}'
         query = f"""UPDATE karavan SET events = events || %s 
@@ -397,12 +440,21 @@ class PostgreSQL:
         return res
 
 
+    def ChangeMsgStatus(self, msg_uuid, change_to):
+        key = '{status}'
+        value = f'"{change_to}"'
+        query = f"UPDATE request SET params = JSONB_SET(params, '{key}', '{value}') WHERE uuid = %s"
+        args = (msg_uuid,)
+        self.execute_query(query, args)
+        return 'done'
+
+
+
     def changeAccountStatus(self, user_uuid, new_status):
-        col = '{status}'
+        key = '{status}'
         value = f'"{new_status}"'
-        query = f"UPDATE users SET active = JSONB_SET(active, '{col}', '{value}') WHERE uuid = %s"
-        args = (user_uuid,)
-        
+        query = f"UPDATE users SET active = JSONB_SET(active, '{key}', '{value}') WHERE uuid = %s"
+        args = (user_uuid,)        
         self.execute_query(query, args)
         return 'done'
 

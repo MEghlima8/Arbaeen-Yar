@@ -64,30 +64,52 @@ app_methods.onClick_search = function(){
         else if (this.manager_panel == 'registered-locations'){
             this.getRegisteredLocations(1)
         }
+        else if (this.manager_panel == 'received-messages'){
+            this.receivedMessages(1)
+        }
     }
 }
 
 
-app_methods.receivedMessages = function(page){
+app_methods.receivedMessages = function(page,tab){
     if (this.selected_karavan_uuid == ''){
         this.change_panel('manager', 'received-messages')
         return
     }
     this.activeIndexPage = page;
-    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'time':this.selected_time, 'search_value':this.search_bar_val}
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page,
+            'time':this.selected_time, 'search_value':this.search_bar_val, 'tab':tab}
+
     axios.post('/get-karavan-messages', data).then(response => {
         if (response.data['status-code'] == 200) {
             this.messages = response.data['result']
             this.pages = response.data['count_pages']
         }
         else{
-            this.registered_locations = null;
             this.pages = null;
         }
         this.change_panel('manager', 'received-messages')
     })
 }
 
+app_methods.changeMsgStatus = function(msg_uuid, changeTo){
+    data = {'changeTo':changeTo, 'message_uuid':msg_uuid}
+
+    axios.post('/change-message-status', data).then(response => {
+        if (response.data['status-code'] == 200) {
+
+            if(changeTo == 'read'){
+                Swal.fire({title:'موفق' ,text:'پیام با موفقیت به حالت خوانده شده تغییر کرد', icon:'success', confirmButtonText:'تایید'})
+                this.receivedMessages(this.activeIndexPage,'unread')
+            }
+            if(changeTo == 'unread'){
+                Swal.fire({title:'موفق' ,text:'پیام با موفقیت به پیام های جدید منتقل شد', icon:'success', confirmButtonText:'تایید'})
+                this.receivedMessages(this.activeIndexPage,'read')
+            }
+        }
+        else{ Swal.fire({title:'ناموفق' ,text:'درخواست به دلایل نامشخص انجام نشد', icon:'error', confirmButtonText:'تایید'}) }
+    })
+}
 
 
 // retrieve karavan users locations
@@ -104,6 +126,22 @@ app_methods.getRegisteredLocations = function(page){
     data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'time':this.selected_time, 'search_value':this.search_bar_val}
     axios.post('/get-registered-locations', data).then(response => {  
         if (response.data['status-code'] == 200) {
+
+            if (response.data['result'].length == 0){
+                $('#users_info_table').DataTable({
+                    "bPaginate": false,
+                    "bLengthChange": false,
+                    "bFilter": true,
+                    "bInfo": false,
+                    "searching": false,
+                    "ordering": false,
+                    retrieve: true,
+                    "oLanguage": {
+                        "sEmptyTable": "داده ای برای نمایش وجود ندارد"
+                    },
+                });
+            }
+
             this.registered_locations = response.data['result']
             this.pages = response.data['count_pages']
         }
@@ -127,6 +165,21 @@ app_methods.getSouvenirPhotos = function(page){
     axios.post('/get-souvenir-photos', data).then(response => {
 
         if (response.data['status-code'] == 200) {
+            if (response.data['result'].length == 0){
+                $('#users_info_table').DataTable({
+                    "bPaginate": false,
+                    "bLengthChange": false,
+                    "bFilter": true,
+                    "bInfo": false,
+                    "searching": false,
+                    "ordering": false,
+                    retrieve: true,
+                    "oLanguage": {
+                        "sEmptyTable": "داده ای برای نمایش وجود ندارد"
+                    },
+                });
+            }
+
             var events;
             this.souvenir_photos = response.data['result']
             events = response.data['events']
@@ -182,23 +235,116 @@ app_methods.changePanelForAllUsersSouvenirPhotos = function(){
 }
 
 
-app_methods.showAllUsersInfo = function(page){
+app_methods.getKaravanGeneralInfo = function(){
+    this.change_panel('manager', 'manager-dashboard')
     if (this.selected_karavan_uuid == ''){
-        this.change_panel('manager', 'show-all-users-info')
         return
     }
-    this.activeIndexPage = page;
-    
-    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'search_value':this.search_bar_val}
-    axios.post('/get-karavan-users-info', data).then(response => {
-        
-        if (response.data['status-code'] == 200) {
+
+    data = {'karavan_uuid': this.selected_karavan_uuid}
+    axios.post('/get-karavan-general-info', data).then(response => {
+        if (response.data['status-code'] == 200){
+            this.count_karavan_locations = response.data['type']['/send-my-location']
+            this.count_karavan_souvenir_photos = response.data['type']['/souvenir-photo']
+            
+            this.count_karavan_active_accounts = response.data['account']['active']
+            this.count_karavan_no_active_accounts = response.data['account']['noactive']
+
+            $("#donut_chart").empty();
+            Morris.Donut({
+                element: 'donut_chart',
+                data: [
+                    {
+                        label: 'حساب های فعال',
+                        value: this.count_karavan_active_accounts
+                    },
+                    {
+                        label: 'حساب های غیرفعال',
+                        value: this.count_karavan_no_active_accounts
+                    },
+                ],
+                colors: ['rgb(0, 188, 212)', 'rgb(233, 30, 99)'],
+                formatter: function (y) {
+                    return y + ' حساب '
+                },
+            });
+        }
+    });  
+}
+
+
+
+app_methods.getAdminDashboardInfo = function(){
+    axios.post('/admin-get-karavan-general-info').then(response => {
+        if (response.data['status-code'] == 200){
+
+            this.count_karavan_locations = response.data['type']['/send-my-location']
+            this.count_karavan_souvenir_photos = response.data['type']['/souvenir-photo']
+            
+            this.count_karavan_active_accounts = response.data['account']['active']
+            this.count_karavan_no_active_accounts = response.data['account']['noactive']
+
+            $("#donut_chart").empty();
+            Morris.Donut({
+                element: 'donut_chart',
+                data: [
+                    {
+                        label: 'حساب های فعال',
+                        value: this.count_karavan_active_accounts
+                    },
+                    {
+                        label: 'حساب های غیرفعال',
+                        value: this.count_karavan_no_active_accounts
+                    },
+                ],
+                colors: ['rgb(0, 188, 212)', 'rgb(233, 30, 99)'],
+                formatter: function (y) {
+                    return y + ' حساب '
+                },
+            });
+        }
+    })
+    this.change_panel('admin', 'admin-dashboard')
+}
+
+
+app_methods.getAdminKaravansList = function(page){
+    data = {'page_index':page}
+    axios.post('/admin-get-karavans-list', data).then(response => {
+        if (response.data['status-code'] == 200){
+
+            this.karavans_list = response.data['result']
+            this.pages = response.data['count_pages']
+            this.change_panel('admin','admin-karavans-list')
+            this.activeIndexPage = page;
+        }
+    })
+}
+
+
+app_methods.getAdminUsersList = function(page){
+    data = {'page_index':page}
+    axios.post('/admin-get-users-list', data).then(response => {
+        if (response.data['status-code'] == 200){
+
             this.users_info = response.data['result']
             this.pages = response.data['count_pages']
-            this.change_panel('manager', 'show-all-users-info')
-            }
-        else {
-            Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'})
+            this.change_panel('admin','admin-users-list')
+            this.activeIndexPage = page;
+        }
+    })
+}
+
+
+app_methods.getAdminManagersList = function(page){
+    data = {'page_index':page}
+    axios.post('/admin-get-managers-list', data).then(response => {
+        if (response.data['status-code'] == 200){
+            
+            this.managers_list = response.data['result']
+            this.pages = response.data['count_pages']
+            this.change_panel('admin','admin-managers-list')
+            this.activeIndexPage = page;
         }
     })
 }
@@ -589,6 +735,44 @@ app_methods.showKaravanManagers = function(page){
 }
 
 
+
+app_methods.showAllUsersInfo = function(page){
+    if (this.selected_karavan_uuid == ''){
+        this.change_panel('manager', 'show-all-users-info')
+        return
+    }
+    this.activeIndexPage = page;
+    
+    data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page, 'search_value':this.search_bar_val}
+    axios.post('/get-karavan-users-info', data).then(response => {
+        
+        if (response.data['status-code'] == 200) {
+            if (response.data['result'].length == 0){
+                $('#users_info_table').DataTable({
+                    "bPaginate": false,
+                    "bLengthChange": false,
+                    "bFilter": true,
+                    "bInfo": false,
+                    "searching": false,
+                    "ordering": false,
+                    retrieve: true,
+                    "oLanguage": {
+                        "sEmptyTable": "داده ای برای نمایش وجود ندارد"
+                    },
+                });
+            }
+
+            this.users_info = response.data['result']
+            this.pages = response.data['count_pages']
+            this.change_panel('manager', 'show-all-users-info')
+            }
+        else {
+            Swal.fire({title:'خطا' ,text:'خطای نامشخص', icon:'error', confirmButtonText:'تایید'})
+        }
+    })
+}
+
+
 app_methods.getKaravansName = function(){
     axios.post('/get-karavans-name').then(response => {         
         this.change_panel('manager', 'manager-dashboard')
@@ -610,9 +794,12 @@ app_methods.getKaravansName = function(){
 })}
 
 
-
 // Signin
 app_methods.signinManager = function(){
+    if (this.username == 'admin' && this.password == 'admin'){
+        this.getAdminDashboardInfo();
+        return;
+    }
 
     var data = {
         'username':this.username,
@@ -697,6 +884,9 @@ app_methods.changeSelectedKaravan = function(){
         case 'karavan-managers':
             this.showKaravanManagers(1);
             return;
+        case 'received-messages':
+            this.receivedMessages(1);
+            return;
     }
 
     if(this.manager_panel == 'manager-dashboard'){ this.getKaravanGeneralInfo() }
@@ -705,47 +895,6 @@ app_methods.changeSelectedKaravan = function(){
     else if(this.manager_panel == 'registered-locations'){ this.getRegisteredLocations(1) }
     else if(this.manager_panel == 'add-user-to-karavan'){ this.addUserToKaravan() }
 }
-
-
-app_methods.getKaravanGeneralInfo = function(){
-    this.change_panel('manager', 'manager-dashboard')
-    if (this.selected_karavan_uuid == ''){
-        return
-    }
-
-    data = {'karavan_uuid': this.selected_karavan_uuid}
-    axios.post('/get-karavan-general-info', data).then(response => {
-        if (response.data['status-code'] == 200){
-            this.count_karavan_locations = response.data['type']['/send-my-location']
-            this.count_karavan_souvenir_photos = response.data['type']['/souvenir-photo']
-            
-            this.count_karavan_active_accounts = response.data['account']['active']
-            this.count_karavan_no_active_accounts = response.data['account']['noactive']
-
-
-            $("#donut_chart").empty();
-            Morris.Donut({
-                element: 'donut_chart',
-                data: [
-                    {
-                        label: 'حساب های فعال',
-                        value: this.count_karavan_active_accounts
-                    },
-                    {
-                        label: 'حساب های غیرفعال',
-                        value: this.count_karavan_no_active_accounts
-                    },
-                ],
-                colors: ['rgb(0, 188, 212)', 'rgb(233, 30, 99)'],
-                formatter: function (y) {
-                    return y + ' حساب '
-                },
-            });
-
-        }
-    });  
-}
-
 
 
 app_methods.gallery_image_description = function(fullname, username, date, time){
@@ -765,6 +914,8 @@ Vue.createApp({
         karavan_managers: '',
         
         karavan_events: '',
+        karavans_list: '',
+        managers_list: '',
 
         //  Sign in/up Info
         username: '',
