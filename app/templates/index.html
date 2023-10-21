@@ -670,7 +670,7 @@
                                     <div class="col-sm-8"></div>
                                     <div class="col-sm-3" style="margin-bottom: -20px;">
                                         <label for="category">فیلتر زمان</label>
-                                        <select class="form-control" v-model="selected_time" @change="receivedMessages(1)">
+                                        <select class="form-control" v-model="selected_time" @change="receivedMessages(1,'null')">
                                             <option value="all">همه</option>
                                             <option value="today">امروز</option>
                                             <option value="week">این هفته</option>
@@ -761,7 +761,7 @@
                                     <div class="pagination">
                                         <a v-for="(page_num,index) in pages"
                                             :key="index"
-                                            @click.prevent="receivedMessages(index + 1)"
+                                            @click.prevent="receivedMessages(index + 1, 'null')"
                                             :class="{ active: isActivePage(index + 1) }" 
                                             href="#">${ page_num }$</a>
                                     </div>

@@ -76,9 +76,10 @@ app_methods.receivedMessages = function(page,tab){
         this.change_panel('manager', 'received-messages')
         return
     }
+    if (tab != 'null'){this.tab = tab}
     this.activeIndexPage = page;
     data = {'karavan_uuid': this.selected_karavan_uuid, 'page_index':page,
-            'time':this.selected_time, 'search_value':this.search_bar_val, 'tab':tab}
+            'time':this.selected_time, 'search_value':this.search_bar_val, 'tab':this.tab}
 
     axios.post('/get-karavan-messages', data).then(response => {
         if (response.data['status-code'] == 200) {
@@ -973,6 +974,7 @@ Vue.createApp({
 
         // Karavan messages
         messages: '',
+        tab:'unread',
 
         map_icons_name:[
                         'pink2.png', 'purple.png', 'brown.png', 
